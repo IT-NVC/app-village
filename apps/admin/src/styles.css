@@ -1,0 +1,17 @@
+html, body, #root { height: 100%; margin: 0; }
+body { background: #f3f8f5; }
+
+/* Trang in mã kích hoạt */
+.print-sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; background: #fff; }
+.code-card { border: 1.5px dashed #888; border-radius: 8px; padding: 14px 16px; break-inside: avoid; font-family: Arial, sans-serif; color: #111; }
+.code-card h4 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; color: #1F7A45; letter-spacing: .3px; }
+.code-card .name { font-size: 18px; font-weight: 700; margin: 6px 0 2px; }
+.code-card .meta { font-size: 13px; color: #444; }
+.code-card .code { font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700; letter-spacing: 4px; margin: 8px 0; padding: 6px 10px; background: #E6F5EC; border-radius: 6px; display: inline-block; }
+.code-card ol { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.45; }
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .print-sheet { padding: 0; gap: 8px; }
+  @page { size: A4; margin: 10mm; }
+}

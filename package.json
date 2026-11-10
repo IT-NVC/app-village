@@ -1,0 +1,27 @@
+{
+  "name": "thon-thong-nhat",
+  "private": true,
+  "description": "Ứng dụng Thôn Thống Nhất - Xã Sóc Sơn",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start -w mobile",
+    "admin": "npm run dev -w admin",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:seed": "node supabase/scripts/seed-dev.mjs",
+    "db:test": "node supabase/tests/e2e.mjs",
+    "db:types": "supabase gen types typescript > packages/shared/src/database.types.ts",
+    "db:test:admin": "node supabase/tests/admin-queries.mjs",
+    "functions:serve": "supabase functions serve",
+    "functions:deploy": "supabase functions deploy admin-reset-password --remote"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "supabase": "^3.1.0",
+    "typescript": "~6.0.3"
+  }
+}

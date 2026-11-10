@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.local.example
+!.env.example
+dist/
+.expo/
+web-build/
+ios/
+android/
+*.log
+.DS_Store
+supabase/.temp/
+supabase/.branches/

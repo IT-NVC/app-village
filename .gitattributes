@@ -1,0 +1,5 @@
+# Thống nhất ký tự xuống dòng LF cho mọi file văn bản (tránh lệch CRLF khi làm trên Windows)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
