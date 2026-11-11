@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 
 import { Colors } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 export type Announcement = {
   id: string;
@@ -69,8 +69,7 @@ export function AnnouncementsProvider({ userId, children }: { userId: string | n
     if (!userId) return;
     refresh();
     // Có thông báo mới -> tải lại ngay
-    const channel = supabase
-      .channel('announcements-feed')
+    const channel = newChannel('announcements-feed')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => refresh())
       .subscribe();
     // Mở lại app -> tải lại (để hiện thông báo hẹn giờ vừa tới giờ)

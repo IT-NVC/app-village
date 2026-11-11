@@ -29,3 +29,14 @@ AppState.addEventListener('change', (state) => {
   if (state === 'active') supabase.auth.startAutoRefresh();
   else supabase.auth.stopAutoRefresh();
 });
+
+let channelSeq = 0;
+/**
+ * Tạo kênh realtime với tên KHÔNG BAO GIỜ trùng.
+ * supabase.channel(tên) trả về kênh đã có nếu trùng tên; kênh đó có thể đã đăng ký xong
+ * (hoặc đang huỷ dở) nên gọi .on() lần nữa sẽ báo "cannot add postgres_changes callbacks ... after subscribe()".
+ */
+export function newChannel(name: string) {
+  channelSeq += 1;
+  return supabase.channel(`${name}#${channelSeq}`);
+}

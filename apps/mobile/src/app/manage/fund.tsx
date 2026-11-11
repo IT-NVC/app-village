@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -9,17 +9,18 @@ import { Forbidden } from '@/components/forbidden';
 import { Button, Card, Choice, Field, Notice, PageHeader, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
+import { confirmAction, showInfo } from '@/lib/dialog';
 import { RECEIPT_BUCKET, vnd } from '@/lib/funds';
-import { compressAndUpload, randomName } from '@/lib/images';
+import { compressAndUpload, randomName, signedUrlsFor } from '@/lib/images';
+import { friendlyError, norm, toVnDate } from '@/lib/manage-data';
 import { useRank } from '@/lib/manage';
 import { supabase } from '@/lib/supabase';
 
 type FundOpt = { id: string; name: string; balance: number };
 type Household = { id: string; code: string | null; head_name: string; area_name: string | null };
+type Day = '0' | '1' | '2' | 'keep';
 
 const QUICK = [50000, 100000, 200000, 500000, 1000000];
-const norm = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
 const pad = (n: number) => String(n).padStart(2, '0');
 const isoDay = (offset: number) => {
   const d = new Date();
@@ -27,32 +28,63 @@ const isoDay = (offset: number) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
+/**
+ * Ghi thu / chi nhanh. Mở với ?fund=<mã quỹ> để chọn sẵn quỹ;
+ * mở với ?tx=<mã khoản> để SỬA hoặc XOÁ một khoản đã ghi (nhật ký lưu lại số cũ).
+ */
 export default function ManageFundScreen() {
+  const params = useLocalSearchParams<{ fund?: string; tx?: string }>();
+  const editingId = params.tx;
   const rank = useRank();
   const { me } = useAuth();
   const [funds, setFunds] = useState<FundOpt[] | null>(null);
   const [households, setHouseholds] = useState<Household[]>([]);
-  const [fundId, setFundId] = useState<string | null>(null);
+  const [fundId, setFundId] = useState<string | null>(params.fund ?? null);
   const [kind, setKind] = useState<'thu' | 'chi'>('thu');
   const [amount, setAmount] = useState(0);
-  const [day, setDay] = useState<'0' | '1' | '2'>('0');
+  const [day, setDay] = useState<Day>(editingId ? 'keep' : '0');
+  const [oldDate, setOldDate] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [search, setSearch] = useState('');
   const [household, setHousehold] = useState<Household | null>(null);
   const [payer, setPayer] = useState('');
   const [receipt, setReceipt] = useState<{ uri: string; width: number; height: number } | null>(null);
+  const [oldReceipt, setOldReceipt] = useState<{ path: string; url: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.rpc('fund_summaries').then(({ data }) => {
-      const active = (data ?? []).filter((f) => f.is_active).map((f) => ({ id: f.id, name: f.name, balance: f.balance }));
+    (async () => {
+      const [s, h, t] = await Promise.all([
+        supabase.rpc('fund_summaries'),
+        supabase.rpc('household_options'),
+        editingId
+          ? supabase.from('fund_transactions').select('id, fund_id, kind, amount, occurred_on, description, household_id, payer_name, receipt_path').eq('id', editingId).single()
+          : Promise.resolve(null),
+      ]);
+      const active = (s.data ?? []).filter((f) => f.is_active || f.id === t?.data?.fund_id).map((f) => ({ id: f.id, name: f.name, balance: f.balance }));
+      const hh = h.data ?? [];
       setFunds(active);
-      if (active.length === 1) setFundId(active[0].id);
-    });
-    supabase.rpc('household_options').then(({ data }) => setHouseholds(data ?? []));
-  }, []);
+      setHouseholds(hh);
+      if (t?.data) {
+        const x = t.data;
+        setFundId(x.fund_id);
+        setKind(x.kind);
+        setAmount(x.amount);
+        setDescription(x.description);
+        setOldDate(x.occurred_on);
+        setPayer(x.payer_name ?? '');
+        setHousehold(hh.find((y) => y.id === x.household_id) ?? null);
+        if (x.receipt_path) {
+          const urls = await signedUrlsFor(RECEIPT_BUCKET, [x.receipt_path]);
+          setOldReceipt({ path: x.receipt_path, url: urls[x.receipt_path] ?? null });
+        }
+      } else if (!params.fund && active.length === 1) {
+        setFundId(active[0].id);
+      }
+    })();
+  }, [editingId, params.fund]);
 
   const matches = useMemo(() => {
     const q = norm(search);
@@ -80,20 +112,24 @@ export default function ManageFundScreen() {
     setBusy(true);
     setError(null);
     try {
-      const receipt_path = receipt
-        ? await compressAndUpload(RECEIPT_BUCKET, `${fundId}/${randomName()}`, receipt.uri, receipt.width, receipt.height, 1800)
-        : null;
-      const { error: err } = await supabase.from('fund_transactions').insert({
-        fund_id: fundId,
+      let receipt_path: string | null = oldReceipt?.path ?? null;
+      if (receipt) receipt_path = await compressAndUpload(RECEIPT_BUCKET, `${fundId}/${randomName()}`, receipt.uri, receipt.width, receipt.height, 1800);
+      const payload = {
         kind,
         amount,
-        occurred_on: isoDay(Number(day)),
+        occurred_on: day === 'keep' && oldDate ? oldDate : isoDay(day === 'keep' ? 0 : Number(day)),
         description: description.trim(),
-        household_id: kind === 'thu' ? household?.id ?? null : null,
+        household_id: kind === 'thu' ? (household?.id ?? null) : null,
         payer_name: payer.trim() || null,
         receipt_path,
-        created_by: me.id,
-      });
+      };
+      if (editingId) {
+        const { error: err } = await supabase.from('fund_transactions').update(payload).eq('id', editingId);
+        if (err) throw new Error(err.message);
+        router.back();
+        return;
+      }
+      const { error: err } = await supabase.from('fund_transactions').insert({ ...payload, fund_id: fundId, created_by: me.id });
       if (err) throw new Error(err.message);
       setDone(`Đã ghi ${kind === 'thu' ? 'khoản thu' : 'khoản chi'} ${vnd(amount)}${household && kind === 'thu' ? ` của hộ ${household.head_name}` : ''}.`);
       setAmount(0);
@@ -103,19 +139,29 @@ export default function ManageFundScreen() {
       setPayer('');
       setReceipt(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(friendlyError(e instanceof Error ? e.message : String(e)));
     }
     setBusy(false);
   }
 
+  function remove() {
+    if (!editingId) return;
+    confirmAction('Xoá khoản này?', `${vnd(amount)} · ${description}\nNhật ký vẫn lưu lại khoản đã xoá.`, 'Xoá', async () => {
+      const { error: err } = await supabase.from('fund_transactions').delete().eq('id', editingId);
+      if (err) return showInfo('Không xoá được', friendlyError(err.message));
+      router.back();
+    }, true);
+  }
+
+  const title = editingId ? 'Sửa khoản thu chi' : 'Ghi thu chi quỹ';
   return (
-    <ScrollPage header={<PageHeader title="Ghi thu chi quỹ" subtitle="Mọi người dân xem được — ghi chính xác" onBack={() => router.back()} />}>
+    <ScrollPage header={<PageHeader title={title} subtitle="Mọi người dân xem được — ghi chính xác" onBack={() => (router.canGoBack() ? router.back() : router.replace('/manage'))} />}>
       {done && <Notice tone="success" text={done} />}
       <Card style={styles.card}>
         {funds === null ? (
           <ActivityIndicator color={Colors.primary} />
         ) : funds.length === 0 ? (
-          <Notice tone="warning" text="Chưa có quỹ nào đang hoạt động. Tạo quỹ trên trang quản trị." />
+          <Notice tone="warning" text="Chưa có quỹ nào đang hoạt động. Tạo quỹ ở mục Quỹ thôn." />
         ) : (
           <Choice label="Quỹ" options={funds.map((f) => ({ value: f.id, label: f.name }))} value={fundId} onChange={setFundId} />
         )}
@@ -162,9 +208,10 @@ export default function ManageFundScreen() {
             </Pressable>
           )}
         </View>
-        <Choice<'0' | '1' | '2'>
+        <Choice<Day>
           label="Ngày"
           options={[
+            ...(editingId && oldDate ? [{ value: 'keep' as Day, label: `Giữ ${toVnDate(oldDate)}` }] : []),
             { value: '0', label: 'Hôm nay' },
             { value: '1', label: 'Hôm qua' },
             { value: '2', label: 'Hôm kia' },
@@ -172,12 +219,7 @@ export default function ManageFundScreen() {
           value={day}
           onChange={setDay}
         />
-        <Field
-          label="Nội dung"
-          placeholder={kind === 'thu' ? 'VD: Đóng góp làm đường đợt 1' : 'VD: Mua 50 bao xi măng'}
-          value={description}
-          onChangeText={setDescription}
-        />
+        <Field label="Nội dung" placeholder={kind === 'thu' ? 'VD: Đóng góp làm đường đợt 1' : 'VD: Mua 50 bao xi măng'} value={description} onChangeText={setDescription} />
       </Card>
 
       {kind === 'thu' && (
@@ -224,16 +266,22 @@ export default function ManageFundScreen() {
       )}
 
       <Card style={styles.card}>
-        <Field
-          label={kind === 'chi' ? 'Người nhận / nơi bán (nếu có)' : 'Người nộp (nếu không thuộc hộ nào)'}
-          value={payer}
-          onChangeText={setPayer}
-        />
+        <Field label={kind === 'chi' ? 'Người nhận / nơi bán (nếu có)' : 'Người nộp (nếu không thuộc hộ nào)'} value={payer} onChangeText={setPayer} />
         <Txt variant="label">Ảnh chứng từ</Txt>
-        {receipt ? (
+        {receipt || oldReceipt ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <Image source={{ uri: receipt.uri }} style={styles.receipt} contentFit="cover" />
-            <Button title="Bỏ ảnh" variant="dangerOutline" onPress={() => setReceipt(null)} style={{ flex: 1 }} />
+            <Image source={receipt ? { uri: receipt.uri } : oldReceipt?.url ? { uri: oldReceipt.url } : undefined} style={styles.receipt} contentFit="cover" />
+            <View style={{ flex: 1, gap: Spacing.sm }}>
+              <Button title="Chụp lại" icon="camera" variant="secondary" onPress={() => pickReceipt(true)} />
+              <Button
+                title="Bỏ ảnh"
+                variant="dangerOutline"
+                onPress={() => {
+                  setReceipt(null);
+                  setOldReceipt(null);
+                }}
+              />
+            </View>
           </View>
         ) : (
           <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
@@ -245,12 +293,13 @@ export default function ManageFundScreen() {
 
       <Notice text={error} />
       <Button
-        title={amount ? `Ghi ${kind === 'thu' ? 'thu' : 'chi'} ${vnd(amount)}` : 'Ghi sổ'}
+        title={editingId ? 'Lưu thay đổi' : amount ? `Ghi ${kind === 'thu' ? 'thu' : 'chi'} ${vnd(amount)}` : 'Ghi sổ'}
         icon="checkmark-circle"
         variant={kind === 'chi' ? 'danger' : 'primary'}
         onPress={save}
         loading={busy}
       />
+      {editingId && <Button title="Xoá khoản này" icon="trash" variant="dangerOutline" onPress={remove} />}
     </ScrollPage>
   );
 }
@@ -263,6 +312,5 @@ const styles = StyleSheet.create({
   quickBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.primaryBorder },
   selected: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, padding: 12, borderRadius: Radius.md, backgroundColor: Colors.primarySoft },
   match: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: Radius.md, borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  receipt: { width: 80, height: 80, borderRadius: Radius.md, backgroundColor: Colors.divider },
+  receipt: { width: 96, height: 96, borderRadius: Radius.md, backgroundColor: Colors.divider },
 });
-

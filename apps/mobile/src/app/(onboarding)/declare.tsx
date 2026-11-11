@@ -11,6 +11,11 @@ import { supabase } from '@/lib/supabase';
 type Gender = Database['public']['Enums']['gender'];
 type Area = { id: string; name: string };
 
+async function fetchAreas(): Promise<{ list: Area[]; failed: boolean }> {
+  const { data, error } = await supabase.from('areas').select('id, name').order('sort_order').order('name');
+  return { list: data ?? [], failed: !!error };
+}
+
 /** "05/09/1960" -> "1960-09-05"; trả null nếu sai định dạng */
 function parseVnDate(input: string): string | null {
   const m = input.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -34,16 +39,18 @@ export default function DeclareScreen() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from('areas')
-      .select('id, name')
-      .order('sort_order')
-      .order('name')
-      .then(({ data, error: e }) => {
-        if (e) setError('Không tải được danh sách khu. Vui lòng thử lại.');
-        setAreas(data ?? []);
-      });
+    fetchAreas().then(({ list, failed }) => {
+      if (failed) setError('Không tải được danh sách khu. Vui lòng thử lại.');
+      setAreas(list);
+    });
   }, []);
+
+  async function reloadAreas() {
+    setAreas(null);
+    const { list, failed } = await fetchAreas();
+    setError(failed ? 'Không tải được danh sách khu. Vui lòng thử lại.' : null);
+    setAreas(list);
+  }
 
   async function onSubmit() {
     if (fullName.trim().split(/\s+/).length < 2) return setError('Vui lòng nhập đầy đủ họ và tên.');
@@ -86,7 +93,10 @@ export default function DeclareScreen() {
         {areas === null ? (
           <ActivityIndicator color={Colors.primary} />
         ) : areas.length === 0 ? (
-          <Notice tone="warning" text="Thôn chưa tạo khu vực nào. Vui lòng liên hệ cán bộ thôn." />
+          <>
+            <Notice tone="warning" text="Thôn chưa tạo khu vực nào. Vui lòng liên hệ cán bộ thôn, hoặc bấm Tải lại sau khi cán bộ đã tạo." />
+            <Button title="Tải lại danh sách khu" icon="refresh" variant="secondary" onPress={reloadAreas} />
+          </>
         ) : (
           <Choice
             label="Khu đang sinh sống"

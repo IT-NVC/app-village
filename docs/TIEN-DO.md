@@ -1,6 +1,6 @@
 # Tiến độ dự án — App Thôn Thống Nhất (Xã Sóc Sơn)
 
-> Cập nhật lần cuối: **11/11/2026** (đợt 9: icon mái đình + Khu cán bộ trong app)
+> Cập nhật lần cuối: **11/11/2026** (đợt 10: Khu cán bộ đầy đủ trong app)
 > File này ghi lại **đã làm gì, chưa làm gì, và cách làm tiếp trên máy khác**.
 > Khi làm xong một hạng mục, nhớ đánh dấu `[x]` và cập nhật ngày ở trên.
 
@@ -85,14 +85,17 @@
       (sáng / chiều / tối / cả ngày; khung đã có người đặt bị làm mờ), ghi mục đích
 - [x] **Quỹ thôn** (`app/funds/`): danh sách quỹ (số dư, thu, chi, % mục tiêu), chi tiết: từng khoản thu (+ xanh) /
       chi (− đỏ) kèm ảnh chứng từ, danh sách hộ đã đóng góp (đánh dấu "hộ của bạn"); ô "Quỹ thôn" trên trang chủ
-- [x] **Khu cán bộ — tab "Quản lý"** (chỉ hiện với Bí thư / Trưởng thôn / Phó thôn; số việc chờ trên tab; rung khi có SOS):
-  - `manage/sos`: tín hiệu 3 ngày, gọi điện, xem bản đồ, Tiếp nhận → Đã xử lý (+ push cho người dân)
-  - `manage/approvals`: duyệt / từ chối (kèm lý do) tài khoản tự khai báo, cảnh báo trùng nhân khẩu đã nhập
-  - `manage/reports` + `manage/report/[id]` (Bí thư / Trưởng thôn): xử lý phản ánh, ảnh, gọi người gửi, ghi chú
-  - `manage/announce`: gửi thông báo toàn thôn / theo khu, chọn mức độ, xác nhận trước khi gửi
-  - `manage/bookings`: duyệt / từ chối đặt nhà văn hoá (khoá nút Duyệt khi trùng giờ)
-  - `manage/fund`: ghi thu chi nhanh (nút +50k/+100k…, tìm hộ không dấu, chụp phiếu thu)
-  - Việc ngồi bàn (nhập Excel, in mã, phân quyền, khảo sát, nhật ký, xuất CSV) vẫn ở trang web quản trị
+- [x] **Khu cán bộ — tab "Quản lý"** (chỉ hiện với Bí thư / Trưởng thôn / Phó thôn; số việc chờ trên tab; rung khi có SOS).
+  Làm được **gần như mọi việc như trang web**, trừ nhập / xuất số liệu hàng loạt. Mỗi mục là một màn hình trong `app/manage/`:
+  - *Cần xử lý*: `sos` · `approvals` (duyệt tài khoản, cảnh báo trùng nhân khẩu) · `reports` + `report/[id]` (Bí thư / Trưởng thôn) · `bookings` (duyệt, từ chối, huỷ lịch đã duyệt)
+  - *Người dân*: `residents` + `resident/[id]` (thêm / sửa / xoá, **chia sẻ mã kích hoạt**, cấp lại mã) · `accounts` + `account/[id]` (chức vụ theo cấp bậc, khoá / mở khoá, đặt lại mật khẩu, duyệt)
+  - *Thông tin cho bà con*: `announce` (toàn thôn / khu / ban ngành, **hẹn giờ**) · `announcements` + `announcement/[id]` (% đã đọc, người chưa đọc kèm nút gọi, xoá) · `news` + `news-edit/[id]` (ảnh bìa, nháp / đăng, ghim) · `polls` + `poll-new` + `poll/[id]` · `events` + `event/[id]`
+  - *Khu vực & nhóm chat*: `areas` · `orgs` + `org/[id]` (thành viên, trưởng ban) · `chats` + `chat-admin/[id]` (tạo nhóm, thành viên, khoá chat, thu hồi tin)
+  - *Quỹ & địa điểm*: `fund` (ghi / **sửa / xoá** thu chi, chụp phiếu) · `funds` + `fund-info/[id]` (số dư, hộ đã góp, **hộ chưa góp kèm SĐT**) · `venues`
+  - *Hệ thống*: `settings` (công tắc chờ duyệt, danh bạ) · `audit` (nhật ký, Bí thư / Trưởng thôn)
+  - Dùng chung: `components/manage-kit.tsx` (useLoad, Async, ManageShell, FormSheet, PersonPicker, DateTimePick, PillTabs…), `lib/manage-data.ts`.
+  - **Chỉ còn làm trên web**: nhập nhân khẩu từ Excel, in hàng loạt phiếu mã kích hoạt, xuất CSV báo cáo quỹ.
+  - ⚠ Mới kiểm tra bằng TypeScript / lint / đóng gói; **chưa chạy thử trên máy** (cần xem kỹ từng màn hình khi dùng thật).
 - [x] **Gửi phản ánh** (`app/report/new.tsx`): 6 loại sự cố, chụp/chọn tối đa 3 ảnh (tự nén ≤1280px, JPEG 70%), tự lấy vị trí + ghi địa chỉ
 - [x] **Chi tiết phản ánh** (`app/report/[id].tsx`): xem ảnh phóng to, mở bản đồ, dòng thời gian xử lý kèm ghi chú cán bộ, đánh giá 1–5 sao khi hoàn thành
 - [x] Tab Cá nhân: thông tin, ban ngành, đăng xuất, **Sửa thông tin** (`app/profile-edit.tsx`: ảnh đại diện cắt vuông, số điện thoại)
@@ -124,6 +127,7 @@
 ### Cấu hình cloud đã xong
 - [x] Google provider bật; Email provider bật; **Confirm email tắt**
 - [x] Tài khoản Bí thư: `chuongtik2@gmail.com`, `vanchuongsubmail@gmail.com` (đăng nhập Google)
+- [x] Script tạo Bí thư bằng tên đăng nhập + mật khẩu (kèm tạo các khu): `supabase/create_bi_thu.sql` — chạy trong SQL Editor
 
 ---
 
@@ -144,7 +148,7 @@
       trên Android, bấm thông báo mở đúng màn hình, huỷ mã khi đăng xuất) + admin + Edge Function `notify`.
       **Chờ** cấu hình tài khoản Expo/Firebase + development build (xem HUONG-DAN-PUSH.md). Trong Expo Go push tự bỏ qua.
 - [ ] Push cho **thông báo hẹn giờ** khi tới giờ (cần pg_cron gọi `notify`)
-- [ ] Xem lại giao diện tab **Quản lý** (6 tab trên màn hình hẹp), tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức, Tin nhắn (đặc biệt: bàn phím khi chat trên Android) trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
+- [ ] **Chạy thử toàn bộ tab Quản lý trên máy** (30 màn hình mới, chưa được thử với dữ liệu thật) và xem 6 tab trên màn hình hẹp; xem lại tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức, Tin nhắn (đặc biệt: bàn phím khi chat trên Android) trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
 - [ ] (Nhỏ) Đổi/bỏ ảnh bìa tin tức chưa xoá ảnh cũ trong kho `news` — dọn định kỳ nếu kho đầy
 
 ### Giai đoạn 2

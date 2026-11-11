@@ -54,6 +54,23 @@ export function translateAuthError(message: string): string {
   return message;
 }
 
+/** Mã đăng nhập đã đổi (mỗi mã chỉ dùng được một lần — tránh đổi trùng khi cả 2 đường cùng nhận được) */
+const usedCodes = new Set<string>();
+
+/** Hoàn tất đăng nhập Google từ địa chỉ quay về (chứa ?code=… hoặc ?error_description=…) */
+export async function completeOAuth(url: string): Promise<string | null> {
+  const query = url.includes('?') ? url.slice(url.indexOf('?') + 1).split('#')[0] : '';
+  const params = new URLSearchParams(query);
+  const errDesc = params.get('error_description');
+  if (errDesc) return translateAuthError(errDesc);
+  const code = params.get('code');
+  if (!code) return 'Đăng nhập Google không thành công.';
+  if (usedCodes.has(code)) return null;
+  usedCodes.add(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  return error ? translateAuthError(error.message) : null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [me, setMe] = useState<Me | null>(null);
@@ -137,21 +154,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return error ? translateAuthError(error.message) : null;
       },
       async signInWithGoogle() {
-        const redirectTo = makeRedirectUri();
+        // Quay về một đường dẫn riêng (/auth/callback), KHÔNG phải địa chỉ gốc của app:
+        // trong Expo Go, địa chỉ gốc exp://…:8081 trùng với địa chỉ mở dự án -> Expo Go tải lại app và làm mất kết quả.
+        const redirectTo = makeRedirectUri({ path: 'auth/callback' });
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: { redirectTo, skipBrowserRedirect: true },
         });
         if (error || !data.url) return translateAuthError(error?.message ?? 'Không mở được Google');
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        if (result.type !== 'success') return null; // người dùng tự đóng
-        const params = new URL(result.url).searchParams;
-        const errDesc = params.get('error_description');
-        if (errDesc) return translateAuthError(errDesc);
-        const code = params.get('code');
-        if (!code) return 'Đăng nhập Google không thành công.';
-        const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
-        return exErr ? translateAuthError(exErr.message) : null;
+        // Nếu kết quả đi theo đường deep link thay vì trả về đây, màn hình app/auth/callback.tsx sẽ hoàn tất đăng nhập
+        if (result.type !== 'success') return null;
+        return completeOAuth(result.url);
       },
       async signOut() {
         await unregisterPush();

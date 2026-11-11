@@ -78,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Trình duyệt chuyển sang Google rồi quay lại trang này; supabase-js tự đọc phiên từ URL
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin },
+          // Có dấu "/" ở cuối để khớp mẫu Redirect URL "http://localhost:5173/**" trên Supabase
+          options: { redirectTo: `${window.location.origin}/` },
         });
         return error ? error.message : null;
       },

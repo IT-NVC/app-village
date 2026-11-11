@@ -9,7 +9,7 @@ import { Button, Card, EmptyState, IconCircle, Notice, PageHeader, ScrollPage, T
 import { Colors, Font, FontSize, Radius, Shadow, Spacing } from '@/constants/theme';
 import { fmtDateTime, timeAgo } from '@/lib/format';
 import { CATEGORY_STYLE, REPORT_SELECT, STATUS_STYLE, signedUrls, type Report } from '@/lib/reports';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 type Update = { id: string; status: ReportStatus; note: string | null; created_at: string };
 
@@ -39,8 +39,7 @@ export default function ReportDetail() {
   useEffect(() => {
     fetchReport(id).then(apply);
     // Cán bộ cập nhật trạng thái -> hiện ngay
-    const channel = supabase
-      .channel(`report-${id}`)
+    const channel = newChannel(`report-${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reports', filter: `id=eq.${id}` }, () => load())
       .subscribe();
     return () => {

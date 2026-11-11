@@ -2,7 +2,7 @@ import type { Database } from '@thon/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 export type ChatGroup = Database['public']['Functions']['my_chat_groups']['Returns'][number];
 
@@ -68,8 +68,7 @@ export function ChatProvider({ enabled, children }: { enabled: boolean; children
     if (!enabled) return;
     fetchInbox().then(setGroups);
     // Tin nhắn mới / được thêm vào nhóm -> cập nhật hộp thư (RLS chỉ gửi sự kiện của nhóm mình)
-    const channel = supabase
-      .channel('chat-inbox')
+    const channel = newChannel('chat-inbox')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => fetchInbox().then(setGroups))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_group_members' }, () => fetchInbox().then(setGroups))
       .subscribe();

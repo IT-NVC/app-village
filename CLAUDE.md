@@ -16,6 +16,10 @@ npm workspaces: `apps/mobile` (Expo SDK 58, Expo Router, `src/app`), `apps/admin
   muốn thử migration thì `npx supabase start` → `npm run db:reset` → các `npm run db:test*` → `npm run db:types:local`;
   sau đó (hỏi người dùng) `npx supabase db push --remote`. `npm run db:types` lấy kiểu từ cloud.
 - Lệnh Supabase CLI tác động cloud cần `--remote`; **hỏi người dùng trước** khi ghi lên cloud (production).
+- Kênh realtime trong app: **luôn tạo bằng `newChannel(tên)`** (`lib/supabase.ts`), không dùng `supabase.channel(tên)` trực tiếp
+  (trùng tên → lỗi "cannot add postgres_changes callbacks after subscribe()"). Chỉ nghe các bảng đã nằm trong publication
+  `supabase_realtime` (thêm bảng mới bằng migration `alter publication supabase_realtime add table …`); nghe bảng khác làm hỏng cả kênh.
+  Dữ liệu dùng chung nhiều màn hình thì đặt trong một Provider ở `app/_layout.tsx`, đừng gọi hook đăng ký realtime ở nhiều nơi.
 - Mobile: dùng component trong `src/components/ui.tsx` và token trong `src/constants/theme.ts`;
   font Be Vietnam Pro qua `fontFamily: Font.*` (không dùng `fontWeight`); chữ to, nút ≥ 56px.
   Cài thư viện bằng `npx expo install`. Đọc `apps/mobile/AGENTS.md`.

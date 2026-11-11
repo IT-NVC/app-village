@@ -48,7 +48,8 @@ Kiểm thử local: `npm run functions:serve` (cửa sổ riêng) → `npm run d
 3. Dashboard → **Authentication → Sign In / Providers → Email**: **tắt "Confirm email"**
    (đăng nhập bằng username được quy đổi thành email nội bộ `username@thongnhat.local`, không có hộp thư thật).
 4. Bật Google: xem mục *Đăng nhập Google* (làm ở giai đoạn đăng nhập).
-5. Bí thư tạo tài khoản trong app, sau đó chạy `supabase/bootstrap_bi_thu.sql` trong SQL Editor.
+5. Tạo tài khoản Bí thư đầu tiên: chạy `supabase/create_bi_thu.sql` trong SQL Editor (sửa tên đăng nhập,
+   mật khẩu, họ tên, các khu ở đầu file). Hoặc: tạo tài khoản trong app rồi chạy `supabase/bootstrap_bi_thu.sql`.
    Từ đó Bí thư phân quyền cho mọi người trong app/admin.
 
 ## Mô hình phân quyền

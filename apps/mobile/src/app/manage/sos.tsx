@@ -11,7 +11,7 @@ import { showInfo } from '@/lib/dialog';
 import { fmtDateTime, timeAgo } from '@/lib/format';
 import { one, useRank } from '@/lib/manage';
 import { notifyEvent } from '@/lib/push';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 type Row = {
   id: string;
@@ -71,8 +71,7 @@ export default function ManageSosScreen() {
 
   useEffect(() => {
     fetchSos().then(setRows);
-    const channel = supabase
-      .channel('manage-sos')
+    const channel = newChannel('manage-sos')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sos_events' }, () => {
         Vibration.vibrate([0, 500, 200, 500]);
         fetchSos().then(setRows);

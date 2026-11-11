@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { Linking, Pressable, View } from 'react-native';
 
-import { Forbidden } from '@/components/forbidden';
-import { Button, Card, EmptyState, PageHeader, PromptModal, Txt } from '@/components/ui';
-import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
+import { Async, ManageList, ManageShell, PillTabs, RowCard, useLoad } from '@/components/manage-kit';
+import { Button, PromptModal, Txt } from '@/components/ui';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { dayTitle, hhmm } from '@/lib/calendar';
-import { showInfo } from '@/lib/dialog';
-import { one, useRank } from '@/lib/manage';
+import { confirmAction, showInfo } from '@/lib/dialog';
+import { one } from '@/lib/manage';
 import { notifyEvent } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
+
+type Filter = 'cho_duyet' | 'upcoming' | 'tu_choi' | 'da_huy';
 
 type Row = {
   id: string;
@@ -19,20 +20,25 @@ type Row = {
   purpose: string;
   starts_at: string;
   ends_at: string;
+  review_note: string | null;
   name: string;
   phone: string | null;
   area: string | null;
   conflict: boolean;
 };
 
-async function fetchPending(): Promise<Row[]> {
+async function load(filter: Filter): Promise<Row[]> {
+  let q = supabase
+    .from('venue_bookings')
+    .select('id, venue_id, purpose, starts_at, ends_at, review_note, venues(name), requester:profiles!venue_bookings_requester_id_fkey(username, residents(full_name, phone, areas(name)))')
+    .order('starts_at')
+    .limit(150);
+  q = filter === 'upcoming' ? q.eq('status', 'da_duyet').gte('ends_at', new Date().toISOString()) : q.eq('status', filter);
   const [p, a] = await Promise.all([
-    supabase
-      .from('venue_bookings')
-      .select('id, venue_id, purpose, starts_at, ends_at, venues(name), requester:profiles!venue_bookings_requester_id_fkey(username, residents(full_name, phone, areas(name)))')
-      .eq('status', 'cho_duyet')
-      .order('starts_at'),
-    supabase.from('venue_bookings').select('venue_id, starts_at, ends_at').eq('status', 'da_duyet').gte('ends_at', new Date().toISOString()),
+    q,
+    filter === 'cho_duyet'
+      ? supabase.from('venue_bookings').select('venue_id, starts_at, ends_at').eq('status', 'da_duyet').gte('ends_at', new Date().toISOString())
+      : Promise.resolve({ data: [] as { venue_id: string; starts_at: string; ends_at: string }[] }),
   ]);
   return (p.data ?? []).map((b) => {
     const u = one(b.requester);
@@ -44,27 +50,20 @@ async function fetchPending(): Promise<Row[]> {
       purpose: b.purpose,
       starts_at: b.starts_at,
       ends_at: b.ends_at,
+      review_note: b.review_note,
       name: r?.full_name ?? u?.username ?? '',
       phone: r?.phone ?? null,
       area: one(r?.areas)?.name ?? null,
-      conflict: (a.data ?? []).some(
-        (x) => x.venue_id === b.venue_id && new Date(x.starts_at) < new Date(b.ends_at) && new Date(x.ends_at) > new Date(b.starts_at),
-      ),
+      conflict: (a.data ?? []).some((x) => x.venue_id === b.venue_id && new Date(x.starts_at) < new Date(b.ends_at) && new Date(x.ends_at) > new Date(b.starts_at)),
     };
   });
 }
 
 export default function ManageBookingsScreen() {
-  const rank = useRank();
-  const [rows, setRows] = useState<Row[] | null>(null);
+  const [filter, setFilter] = useState<Filter>('cho_duyet');
+  const state = useLoad(() => load(filter), filter);
   const [busy, setBusy] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ row: Row; approve: boolean } | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    fetchPending().then(setRows);
-  }, []);
-  const load = useCallback(() => fetchPending().then(setRows), []);
 
   async function review(r: Row, approve: boolean, note: string) {
     setBusy(r.id);
@@ -73,31 +72,44 @@ export default function ManageBookingsScreen() {
     setDialog(null);
     if (error) return showInfo('Không thực hiện được', error.message);
     notifyEvent('booking_review', r.id);
-    load();
+    await state.reload();
   }
 
-  if (rank < 1) return <Forbidden />;
+  function cancel(r: Row) {
+    confirmAction('Huỷ lịch đã duyệt?', `${r.venue} · ${dayTitle(new Date(r.starts_at))} · ${r.name}`, 'Huỷ lịch', async () => {
+      const { error } = await supabase.rpc('cancel_booking', { p_booking_id: r.id });
+      if (error) return showInfo('Không huỷ được', error.message);
+      await state.reload();
+    }, true);
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <PageHeader title="Duyệt đặt lịch" subtitle={rows ? `${rows.length} yêu cầu đang chờ` : undefined} onBack={() => router.back()} />
-      {rows === null ? (
-        <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xl, flexGrow: 1 }}
-          refreshControl={<RefreshControl refreshing={refreshing} colors={[Colors.primary]} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
-          {rows.length === 0 ? (
-            <EmptyState icon="calendar-outline" title="Không có yêu cầu nào chờ duyệt" />
-          ) : (
-            rows.map((r) => (
-              <Card key={r.id} style={{ padding: Spacing.lg, gap: 6, ...Shadow.sm }}>
+    <ManageShell title="Đặt nhà văn hoá / sân">
+      <Async state={state}>
+        {(rows) => (
+          <ManageList
+            state={state}
+            data={rows}
+            keyOf={(r) => r.id}
+            empty={{ icon: 'calendar-outline', title: 'Không có yêu cầu nào' }}
+            header={
+              <PillTabs<Filter>
+                items={[
+                  { key: 'cho_duyet', label: 'Chờ duyệt' },
+                  { key: 'upcoming', label: 'Đã duyệt, sắp tới' },
+                  { key: 'tu_choi', label: 'Từ chối' },
+                  { key: 'da_huy', label: 'Đã huỷ' },
+                ]}
+                value={filter}
+                onChange={setFilter}
+              />
+            }
+            renderItem={(r) => (
+              <RowCard style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
                 <Txt variant="caption" color={Colors.primaryText}>
                   {r.venue}
                 </Txt>
-                <Txt variant="title" style={{ fontSize: 21, lineHeight: 28 }}>
-                  {dayTitle(new Date(r.starts_at))}
-                </Txt>
+                <Txt variant="subtitle">{dayTitle(new Date(r.starts_at))}</Txt>
                 <Txt variant="bodyStrong">
                   {hhmm(r.starts_at)} – {hhmm(r.ends_at)}
                 </Txt>
@@ -105,6 +117,11 @@ export default function ManageBookingsScreen() {
                 <Txt variant="small" color={Colors.textSecondary}>
                   {[r.name, r.area].filter(Boolean).join(' · ')}
                 </Txt>
+                {r.review_note ? (
+                  <Txt variant="small" color={Colors.textSecondary}>
+                    Ghi chú: {r.review_note}
+                  </Txt>
+                ) : null}
                 {r.phone && (
                   <Pressable onPress={() => Linking.openURL(`tel:${r.phone}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Ionicons name="call" size={18} color={Colors.primaryText} />
@@ -121,22 +138,18 @@ export default function ManageBookingsScreen() {
                     </Txt>
                   </View>
                 )}
-                <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xs }}>
-                  <Button title="Từ chối" variant="dangerOutline" onPress={() => setDialog({ row: r, approve: false })} style={{ flex: 1 }} />
-                  <Button
-                    title="Duyệt"
-                    icon="checkmark"
-                    disabled={r.conflict}
-                    loading={busy === r.id}
-                    onPress={() => setDialog({ row: r, approve: true })}
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </Card>
-            ))
-          )}
-        </ScrollView>
-      )}
+                {filter === 'cho_duyet' && (
+                  <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: 4 }}>
+                    <Button title="Từ chối" variant="dangerOutline" onPress={() => setDialog({ row: r, approve: false })} style={{ flex: 1 }} />
+                    <Button title="Duyệt" icon="checkmark" disabled={r.conflict} loading={busy === r.id} onPress={() => setDialog({ row: r, approve: true })} style={{ flex: 1 }} />
+                  </View>
+                )}
+                {filter === 'upcoming' && <Button title="Huỷ lịch này" variant="dangerOutline" icon="close-circle" onPress={() => cancel(r)} />}
+              </RowCard>
+            )}
+          />
+        )}
+      </Async>
       <PromptModal
         visible={!!dialog}
         title={dialog?.approve ? 'Duyệt yêu cầu?' : 'Từ chối yêu cầu?'}
@@ -147,6 +160,6 @@ export default function ManageBookingsScreen() {
         onCancel={() => setDialog(null)}
         onConfirm={(note) => (dialog ? review(dialog.row, dialog.approve, note) : undefined)}
       />
-    </View>
+    </ManageShell>
   );
 }

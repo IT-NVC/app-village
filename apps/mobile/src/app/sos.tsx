@@ -10,7 +10,7 @@ import { Colors, Font, Gradients, Radius, Shadow, Spacing } from '@/constants/th
 import { useAuth } from '@/lib/auth';
 import { timeAgo } from '@/lib/format';
 import { notifyEvent } from '@/lib/push';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 const HOLD_MS = 3000;
 const BUTTON = 220;
@@ -88,8 +88,7 @@ export default function SosScreen() {
   // Theo dõi trạng thái xử lý theo thời gian thực
   useEffect(() => {
     if (!event?.id) return;
-    const channel = supabase
-      .channel(`sos-${event.id}`)
+    const channel = newChannel(`sos-${event.id}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'sos_events', filter: `id=eq.${event.id}` },

@@ -31,7 +31,7 @@ import {
 import { showInfo } from '@/lib/dialog';
 import { compressAndUpload, randomName, signedUrlsFor } from '@/lib/images';
 import { notifyEvent } from '@/lib/push';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 type Member = { id: string; full_name: string | null };
 
@@ -121,8 +121,7 @@ export default function GroupChatScreen() {
       ensureUrls([m]);
     };
 
-    const channel = supabase
-      .channel(`group-${id}`)
+    const channel = newChannel(`group-${id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `group_id=eq.${id}` }, (p) => {
         upsert(p.new as Message);
         supabase.rpc('mark_group_read', { p_group_id: id });

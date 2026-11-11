@@ -10,7 +10,7 @@ import { Colors, Font, Gradients, Radius, Shadow, Spacing } from '@/constants/th
 import { useAuth } from '@/lib/auth';
 import { timeAgo } from '@/lib/format';
 import { CATEGORY_STYLE, REPORT_SELECT, STATUS_STYLE, signedUrls, type Report } from '@/lib/reports';
-import { supabase } from '@/lib/supabase';
+import { newChannel, supabase } from '@/lib/supabase';
 
 export default function ReportsScreen() {
   const { me } = useAuth();
@@ -41,8 +41,7 @@ export default function ReportsScreen() {
   // Cán bộ đổi trạng thái -> cập nhật ngay
   useEffect(() => {
     if (!me) return;
-    const channel = supabase
-      .channel('my-reports')
+    const channel = newChannel('my-reports')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reports', filter: `reporter_id=eq.${me.id}` }, () =>
         load(),
       )
