@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 
 import { errMsg, fmtDateTime } from '@/lib/format';
-import { must, one, rows, supabase } from '@/lib/supabase';
+import { must, notify, one, rows, supabase } from '@/lib/supabase';
 
 const STATUS_COLOR: Record<SosStatus, string> = { dang_cho: 'red', da_tiep_nhan: 'orange', da_xu_ly: 'green' };
 
@@ -68,6 +68,7 @@ export default function SosPage() {
     mutationFn: async (v: { id: string; status: SosStatus }) =>
       must(await supabase.rpc('handle_sos', { p_sos_id: v.id, p_status: v.status })),
     onSuccess: (_d, v) => {
+      notify('sos_update', v.id);
       message.success(v.status === 'da_tiep_nhan' ? 'Đã tiếp nhận — người dân sẽ thấy ngay trên app' : 'Đã đánh dấu xử lý xong');
       qc.invalidateQueries({ queryKey: ['sos'] });
       qc.invalidateQueries({ queryKey: ['sos-pending'] });

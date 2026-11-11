@@ -42,6 +42,7 @@ const TILES: { icon: IconName; label: string; desc: string; to: Href; color: str
   { icon: 'chatbubbles', label: 'Tin nhắn', desc: 'Nhóm của bạn', to: '/chat', color: Colors.info, bg: Colors.infoSoft },
   { icon: 'hand-left', label: 'Biểu quyết', desc: 'Góp ý việc chung', to: '/polls', color: '#C2185B', bg: '#FCE4EC' },
   { icon: 'newspaper', label: 'Tin tức', desc: 'Hoạt động của thôn', to: '/news', color: Colors.primaryText, bg: Colors.primarySoft },
+  { icon: 'calendar', label: 'Lịch thôn', desc: 'Lịch họp, đặt nhà văn hoá', to: '/calendar', color: '#00796B', bg: '#E0F2F1' },
 ];
 
 const WEEKDAYS = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];

@@ -4,6 +4,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { unregisterPush } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -153,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return exErr ? translateAuthError(exErr.message) : null;
       },
       async signOut() {
+        await unregisterPush();
         await supabase.auth.signOut();
       },
     }),

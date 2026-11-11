@@ -45,3 +45,10 @@ export function mustOne<T>(res: { data: T; error: { message: string } | null }):
   if (res.data == null) throw new Error('Không tìm thấy dữ liệu');
   return res.data;
 }
+
+export type NotifyKind = 'announcement' | 'sos_update' | 'report_update' | 'poll' | 'event' | 'booking_review';
+
+/** Báo máy chủ gửi thông báo đẩy cho một sự kiện (không chờ, không báo lỗi — push chỉ là phụ trợ) */
+export function notify(kind: NotifyKind, id: string) {
+  supabase.functions.invoke('notify', { body: { kind, id } }).catch(() => {});
+}

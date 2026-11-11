@@ -30,6 +30,7 @@ import {
 } from '@/lib/chat';
 import { showInfo } from '@/lib/dialog';
 import { compressAndUpload, randomName, signedUrlsFor } from '@/lib/images';
+import { notifyEvent } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
 type Member = { id: string; full_name: string | null };
@@ -173,6 +174,7 @@ export default function GroupChatScreen() {
       return false;
     }
     setMessages((prev) => (prev?.some((m) => m.id === data.id) ? prev : [data, ...(prev ?? [])]));
+    notifyEvent('message', data.id);
     ensureUrls([data]);
     markRead();
     return true;

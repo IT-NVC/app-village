@@ -31,7 +31,7 @@ import { useState } from 'react';
 
 import { useAuth } from '@/lib/auth';
 import { errMsg, fmtDateTime } from '@/lib/format';
-import { must, one, rows, supabase } from '@/lib/supabase';
+import { must, notify, one, rows, supabase } from '@/lib/supabase';
 
 const BUCKET = 'report-images';
 
@@ -250,6 +250,7 @@ function ReportDrawer({ report, onClose }: { report: ReportRow | null; onClose: 
         }),
       ),
     onSuccess: () => {
+      notify('report_update', report!.id);
       message.success('Đã cập nhật — người dân sẽ thấy ngay trên app');
       form.resetFields(['note']);
       qc.invalidateQueries({ queryKey: ['reports'] });

@@ -27,7 +27,7 @@ import { useState } from 'react';
 
 import { useAreas, useOrganizations } from '@/lib/data';
 import { errMsg, fmtDateTime } from '@/lib/format';
-import { must, one, rows, supabase } from '@/lib/supabase';
+import { must, notify, one, rows, supabase } from '@/lib/supabase';
 
 const PRIORITY_COLOR: Record<PriorityLevel, string> = { khan: 'red', quan_trong: 'orange', thuong: 'green' };
 
@@ -113,8 +113,9 @@ export default function AnnouncementsPage() {
           p_scheduled_at: v.schedule && v.scheduled_at ? v.scheduled_at.toISOString() : undefined,
         }),
       ),
-    onSuccess: (_d, v) => {
+    onSuccess: (id, v) => {
       message.success(v.schedule ? 'Đã hẹn giờ gửi thông báo' : 'Đã gửi thông báo');
+      if (!v.schedule && id) notify('announcement', id as string);
       setOpen(false);
       qc.invalidateQueries({ queryKey: ['announcements'] });
     },

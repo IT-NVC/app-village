@@ -27,7 +27,7 @@ import { useState } from 'react';
 
 import { useAreas, useOrganizations } from '@/lib/data';
 import { errMsg, fmtDateTime } from '@/lib/format';
-import { must, rows, supabase } from '@/lib/supabase';
+import { must, notify, rows, supabase } from '@/lib/supabase';
 
 type Poll = Database['public']['Tables']['polls']['Row'];
 type Result = Database['public']['Functions']['poll_results']['Returns'][number];
@@ -89,7 +89,8 @@ export default function PollsPage() {
           p_org_ids: v.mode === 'all' ? [] : (v.org_ids ?? []),
         }),
       ),
-    onSuccess: () => {
+    onSuccess: (id) => {
+      if (id) notify('poll', id as string);
       message.success('Đã tạo khảo sát — bà con thấy ngay trên app');
       setOpen(false);
       qc.invalidateQueries({ queryKey: ['polls'] });

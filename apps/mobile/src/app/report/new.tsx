@@ -10,6 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, Field, IconCircle, Notice, PageHeader, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
+import { notifyEvent } from '@/lib/push';
 import { CATEGORY_STYLE, MAX_IMAGES, uploadReportImage } from '@/lib/reports';
 import { supabase } from '@/lib/supabase';
 
@@ -109,6 +110,7 @@ export default function NewReportScreen() {
         .select('id')
         .single();
       if (err) throw new Error(err.message);
+      notifyEvent('report_new', data.id);
       router.replace({ pathname: '/report/[id]', params: { id: data.id, created: '1' } });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

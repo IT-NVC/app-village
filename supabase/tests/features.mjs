@@ -421,6 +421,64 @@ check('Gọi không truyền gì thì giữ nguyên thông tin', !keep.error && 
 const dirAv = await danB.from('member_directory').select('avatar_url').eq('id', danA.id).single();
 check('Người khác thấy ảnh đại diện (trong chat / danh bạ)', dirAv.data?.avatar_url === avUrl);
 
+console.log('\nLịch thôn');
+const day = (d, h) => { const t = new Date(); t.setDate(t.getDate() + d); t.setHours(h, 0, 0, 0); return t.toISOString(); };
+const ev = await bithu.from('events').insert({ title: `Họp thôn ${RUN}`, category: 'hop', location: 'Nhà văn hoá', starts_at: day(3, 19), ends_at: day(3, 21), created_by: li.data.user.id }).select('id').single();
+check('Cán bộ thêm sự kiện', !ev.error, ev.error?.message);
+const evBad = await danA.from('events').insert({ title: 'x', starts_at: day(1, 8) });
+check('Người dân KHÔNG thêm được sự kiện', !!evBad.error);
+const upcoming = await danB.from('events').select('id, title, description, category, location, starts_at, ends_at, area_id').gte('starts_at', new Date().toISOString()).order('starts_at');
+check('Người dân xem lịch sắp tới', upcoming.data?.some((e) => e.id === ev.data.id), upcoming.error?.message);
+const evWrong = await bithu.from('events').insert({ title: 'x', starts_at: day(2, 10), ends_at: day(2, 8) });
+check('Giờ kết thúc trước giờ bắt đầu bị chặn', !!evWrong.error);
+
+console.log('\nĐặt lịch nhà văn hoá');
+const venue = (await danA.from('venues').select('id, name').order('sort_order')).data?.[0];
+check('Người dân xem danh sách địa điểm', venue?.name === 'Nhà văn hoá thôn');
+const b1 = await danA.rpc('request_booking', { p_venue_id: venue.id, p_purpose: 'Tổ chức cưới', p_starts_at: day(5, 7), p_ends_at: day(5, 12) });
+check('Người dân gửi yêu cầu đặt', !b1.error, b1.error?.message);
+const b2 = await danB.rpc('request_booking', { p_venue_id: venue.id, p_purpose: 'Sinh hoạt CLB', p_starts_at: day(5, 10), p_ends_at: day(5, 14) });
+check('Người khác gửi yêu cầu trùng giờ (vẫn cho gửi khi chưa ai được duyệt)', !b2.error, b2.error?.message);
+const past = await danA.rpc('request_booking', { p_venue_id: venue.id, p_purpose: 'x', p_starts_at: day(-1, 8), p_ends_at: day(-1, 9) });
+check('Không đặt được thời gian đã qua', past.error?.message.includes('đã qua'), past.error?.message);
+const noPurpose = await danA.rpc('request_booking', { p_venue_id: venue.id, p_purpose: ' ', p_starts_at: day(6, 8), p_ends_at: day(6, 9) });
+check('Bắt buộc ghi mục đích', !!noPurpose.error);
+
+const seeOther = await danB.from('venue_bookings').select('id').eq('id', b1.data);
+check('Lịch CHỜ DUYỆT của người khác thì không thấy', seeOther.data?.length === 0);
+const selfApprove = await danA.rpc('review_booking', { p_booking_id: b1.data, p_approve: true });
+check('Người dân KHÔNG tự duyệt được', !!selfApprove.error);
+const ok1 = await bithu.rpc('review_booking', { p_booking_id: b1.data, p_approve: true, p_note: 'Nhớ dọn dẹp sau khi dùng' });
+check('Cán bộ duyệt yêu cầu', !ok1.error, ok1.error?.message);
+const seeApproved = await danB.from('venue_bookings').select('id, starts_at, ends_at, status').eq('id', b1.data);
+check('Lịch ĐÃ DUYỆT thì mọi người thấy (để biết giờ bận)', seeApproved.data?.[0]?.status === 'da_duyet');
+const ok2 = await bithu.rpc('review_booking', { p_booking_id: b2.data, p_approve: true });
+check('Duyệt yêu cầu trùng giờ → bị chặn, báo lỗi dễ hiểu', ok2.error?.message.includes('đã có lịch được duyệt'), ok2.error?.message);
+const b3 = await danB.rpc('request_booking', { p_venue_id: venue.id, p_purpose: 'x', p_starts_at: day(5, 11), p_ends_at: day(5, 13) });
+check('Gửi yêu cầu vào giờ đã có lịch duyệt → bị chặn ngay', b3.error?.message.includes('đã có người đặt'), b3.error?.message);
+const otherVenue = (await danB.from('venues').select('id').order('sort_order')).data?.[1];
+const b4 = await danB.rpc('request_booking', { p_venue_id: otherVenue.id, p_purpose: 'Giải bóng chuyền', p_starts_at: day(5, 10), p_ends_at: day(5, 12) });
+check('Cùng giờ nhưng KHÁC địa điểm thì được', !b4.error, b4.error?.message);
+const rej = await bithu.rpc('review_booking', { p_booking_id: b2.data, p_approve: false, p_note: 'Trùng lịch cưới' });
+const myB = (await danB.from('venue_bookings').select('status, review_note').eq('id', b2.data).single()).data;
+check('Từ chối kèm lý do, người đặt thấy lý do', !rej.error && myB?.status === 'tu_choi' && myB.review_note === 'Trùng lịch cưới');
+const cancelOther = await danB.rpc('cancel_booking', { p_booking_id: b1.data });
+check('KHÔNG huỷ được lịch của người khác', !!cancelOther.error);
+const cancelMine = await danA.rpc('cancel_booking', { p_booking_id: b1.data });
+check('Người đặt tự huỷ lịch của mình', !cancelMine.error, cancelMine.error?.message);
+const b5 = await danB.rpc('request_booking', { p_venue_id: venue.id, p_purpose: 'Sinh hoạt CLB', p_starts_at: day(5, 10), p_ends_at: day(5, 14) });
+check('Lịch đã huỷ → khung giờ trống lại, đặt được', !b5.error, b5.error?.message);
+const bookingList = await bithu.from('venue_bookings')
+  .select('id, purpose, starts_at, ends_at, status, review_note, venues(name), requester:profiles!venue_bookings_requester_id_fkey(username, residents(full_name, phone, areas(name)))')
+  .eq('status', 'cho_duyet').order('starts_at');
+check('Admin: danh sách chờ duyệt kèm tên, SĐT người đặt', bookingList.data?.some((b) => b.requester?.residents?.full_name && b.venues?.name), bookingList.error?.message);
+const agendaEv = await danB.from('events').select('id, title, description, category, location, starts_at, ends_at, areas(name)').gte('starts_at', new Date().toISOString()).order('starts_at');
+const agendaBk = await danB.from('venue_bookings').select('id, purpose, starts_at, ends_at, venues(name)').eq('status', 'da_duyet').gte('ends_at', new Date().toISOString());
+check('App: lịch gộp sự kiện + lịch đã duyệt (kèm tên địa điểm)', !agendaEv.error && !agendaBk.error && agendaBk.data.every((b) => b.venues?.name), agendaEv.error?.message ?? agendaBk.error?.message);
+const mineBk = await danB.from('venue_bookings').select('id, purpose, starts_at, ends_at, status, review_note, venues(name)').eq('requester_id', danB.id);
+check('App: "Lịch đặt của tôi" gồm cả chờ duyệt / bị từ chối', mineBk.data?.some((b) => b.status === 'tu_choi') && mineBk.data.some((b) => b.status === 'cho_duyet'), mineBk.error?.message);
+await bithu.from('events').delete().eq('id', ev.data.id);
+
 console.log(`\nKết quả: ${pass} đạt, ${fail} lỗi\n`);
 await Promise.all([bithu, danA, danB, photon].map((c) => c.removeAllChannels()));
 process.exit(fail ? 1 : 0);

@@ -9,6 +9,7 @@ import { Card, GradientHeader, IconButton, IconCircle, Notice, ScrollPage, Txt, 
 import { Colors, Font, Gradients, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { timeAgo } from '@/lib/format';
+import { notifyEvent } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
 const HOLD_MS = 3000;
@@ -134,6 +135,7 @@ export default function SosScreen() {
       return;
     }
     setEvent(data);
+    notifyEvent('sos', data.id);
   }
 
   function onPressIn() {

@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PushBridge } from '@/components/push-bridge';
 import { Button, EmptyState, Loading } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { AnnouncementsProvider } from '@/lib/announcements';
@@ -69,6 +70,7 @@ function RootNavigator() {
   return (
     <AnnouncementsProvider userId={phase === 'active' ? (me?.id ?? null) : null}>
       <ChatProvider enabled={phase === 'active'}>
+      {phase === 'active' && <PushBridge />}
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
         <Stack.Protected guard={phase === 'signedOut'}>
           <Stack.Screen name="(auth)" />
@@ -92,6 +94,8 @@ function RootNavigator() {
           <Stack.Screen name="polls/index" />
           <Stack.Screen name="polls/[id]" />
           <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="calendar" />
+          <Stack.Screen name="booking/new" options={{ animation: 'slide_from_bottom' }} />
         </Stack.Protected>
       </Stack>
       </ChatProvider>

@@ -17,8 +17,10 @@
     "db:types": "supabase gen types typescript > packages/shared/src/database.types.ts",
     "db:test:admin": "node supabase/tests/admin-queries.mjs",
     "functions:serve": "supabase functions serve",
-    "functions:deploy": "supabase functions deploy admin-reset-password --remote",
-    "db:test:features": "node supabase/tests/features.mjs"
+    "functions:deploy": "supabase functions deploy --remote",
+    "db:test:features": "node supabase/tests/features.mjs",
+    "functions:serve:test": "supabase functions serve --env-file supabase/tests/push-dry-run.env",
+    "db:test:push": "node supabase/tests/push.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.119.0",

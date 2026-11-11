@@ -12,3 +12,8 @@ android/
 .DS_Store
 supabase/.temp/
 supabase/.branches/
+
+# Firebase (không đưa lên git)
+google-services.json
+GoogleService-Info.plist
+*firebase-adminsdk*.json

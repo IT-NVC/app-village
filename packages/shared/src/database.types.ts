@@ -239,6 +239,38 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"events": {
+                  Row: {
+                    "area_id": string | null,"category": Database["public"]['Enums']["event_category"],"created_at": string,"created_by": string | null,"description": string | null,"ends_at": string | null,"id": string,"location": string | null,"starts_at": string,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "area_id"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"ends_at"?: string | null,"id"?: string,"location"?: string | null,"starts_at": string,"title": string
+                  }
+                  Update: {
+                    "area_id"?: string | null,"category"?: Database["public"]['Enums']["event_category"],"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"ends_at"?: string | null,"id"?: string,"location"?: string | null,"starts_at"?: string,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "events_area_id_fkey"
+      columns: ["area_id"]
+isOneToOne: false
+      referencedRelation: "areas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"households": {
                   Row: {
                     "address": string | null,"area_id": string | null,"code": string | null,"created_at": string,"head_name": string,"id": string
@@ -511,6 +543,20 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"push_log": {
+                  Row: {
+                    "kind": string,"recipients": number,"ref_id": string,"sent_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "kind": string,"recipients"?: number,"ref_id": string,"sent_at"?: string
+                  }
+                  Update: {
+                    "kind"?: string,"recipients"?: number,"ref_id"?: string,"sent_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"push_tokens": {
                   Row: {
                     "platform": string | null,"token": string,"updated_at": string,"user_id": string
@@ -659,6 +705,64 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"venue_bookings": {
+                  Row: {
+                    "created_at": string,"ends_at": string,"id": string,"purpose": string,"requester_id": string,"review_note": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"starts_at": string,"status": Database["public"]['Enums']["booking_status"],"venue_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ends_at": string,"id"?: string,"purpose": string,"requester_id": string,"review_note"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"starts_at": string,"status"?: Database["public"]['Enums']["booking_status"],"venue_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"ends_at"?: string,"id"?: string,"purpose"?: string,"requester_id"?: string,"review_note"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"starts_at"?: string,"status"?: Database["public"]['Enums']["booking_status"],"venue_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "venue_bookings_requester_id_fkey"
+      columns: ["requester_id"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "venue_bookings_requester_id_fkey"
+      columns: ["requester_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "venue_bookings_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "venue_bookings_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "venue_bookings_venue_id_fkey"
+      columns: ["venue_id"]
+isOneToOne: false
+      referencedRelation: "venues"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"venues": {
+                  Row: {
+                    "created_at": string,"description": string | null,"id": string,"is_active": boolean,"name": string,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"sort_order"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"sort_order"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
@@ -703,6 +807,9 @@ isOneToOne: false
                            },
 "can_view_poll":
 { Args: { "p_poll": string }; Returns: boolean
+                           },
+"cancel_booking":
+{ Args: { "p_booking_id": string }; Returns: undefined
                            },
 "cast_vote":
 { Args: { "p_option_ids": (string)[],"p_poll_id": string }; Returns: undefined
@@ -775,6 +882,9 @@ isOneToOne: false
 "poll_is_open":
 { Args: { "p": Omit<Database["public"]['Tables']["polls"]['Row'], Database["public"]['Tables']["polls"]['ComputedFields']> }; Returns: boolean
                            },
+"poll_recipients":
+{ Args: { "p_poll": string }; Returns: string[]
+                           },
 "poll_results":
 { Args: { "p_poll_id": string }; Returns: {
               "label": string,"my_vote": boolean,"option_id": string,"sort_order": number,"voters": number,"votes": number
@@ -791,6 +901,9 @@ isOneToOne: false
 "regenerate_activation_code":
 { Args: { "p_resident_id": string }; Returns: string
                            },
+"register_push_token":
+{ Args: { "p_platform": string,"p_token": string }; Returns: undefined
+                           },
 "register_resident":
 { Args: { "p_area_id": string,"p_birth_date"?: string,"p_full_name": string,"p_gender"?: Database["public"]['Enums']["gender"],"p_household_code"?: string,"p_note"?: string,"p_phone"?: string }; Returns: Json
                            },
@@ -800,8 +913,14 @@ isOneToOne: false
 "remove_org_member":
 { Args: { "p_org_id": string,"p_user_id": string }; Returns: undefined
                            },
+"request_booking":
+{ Args: { "p_ends_at": string,"p_purpose": string,"p_starts_at": string,"p_venue_id": string }; Returns: string
+                           },
 "review_account":
 { Args: { "p_approve": boolean,"p_reason"?: string,"p_user_id": string }; Returns: undefined
+                           },
+"review_booking":
+{ Args: { "p_approve": boolean,"p_booking_id": string,"p_note"?: string }; Returns: undefined
                            },
 "role_rank":
 { Args: { "r": Database["public"]['Enums']["leadership_role"] }; Returns: number
@@ -821,6 +940,9 @@ isOneToOne: false
 "sync_user_area_groups":
 { Args: { "p_user_id": string }; Returns: undefined
                            },
+"unregister_push_token":
+{ Args: { "p_token": string }; Returns: undefined
+                           },
 "update_group_member":
 { Args: { "p_group_id": string,"p_is_muted"?: boolean,"p_role"?: Database["public"]['Enums']["chat_member_role"],"p_user_id": string }; Returns: undefined
                            },
@@ -832,7 +954,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly","vote_scope": "person"|"household"
+            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","booking_status": "cho_duyet"|"da_duyet"|"tu_choi"|"da_huy","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","event_category": "hop"|"van_hoa"|"ve_sinh"|"y_te"|"the_thao"|"khac","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly","vote_scope": "person"|"household"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -952,7 +1074,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"],"vote_scope": ["person", "household"]
+            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"booking_status": ["cho_duyet", "da_duyet", "tu_choi", "da_huy"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"event_category": ["hop", "van_hoa", "ve_sinh", "y_te", "the_thao", "khac"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"],"vote_scope": ["person", "household"]
           }
         }
 } as const

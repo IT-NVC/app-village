@@ -49,6 +49,13 @@
           "photosPermission": "Ứng dụng cần truy cập ảnh để bạn đính kèm ảnh khi gửi phản ánh.",
           "cameraPermission": "Ứng dụng cần dùng camera để bạn chụp ảnh sự cố khi gửi phản ánh."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#3BA56A",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {
