@@ -76,3 +76,23 @@ export function parseVnDate(input: string): string | null {
 
 /** "1960-09-05" -> "05/09/1960" */
 export const toVnDate = (iso: string | null | undefined) => (iso ? iso.split('-').reverse().join('/') : '');
+
+/** Lấy thông báo lỗi tiếng Việt từ phản hồi lỗi của Edge Function */
+export async function functionError(error: unknown): Promise<string> {
+  const ctx = (error as { context?: Response }).context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.json();
+      if (body?.error) return body.error as string;
+    } catch {
+      /* bỏ qua */
+    }
+  }
+  return errText(error);
+}
+
+/** Tạo / xoá tài khoản (cần quyền quản trị Auth nên làm ở máy chủ). Trả về null nếu thành công, hoặc thông báo lỗi. */
+export async function manageAccount(body: { action: 'create'; resident_id: string; username: string; password: string } | { action: 'delete'; user_id: string }): Promise<string | null> {
+  const { error } = await supabase.functions.invoke('admin-account', { body });
+  return error ? functionError(error) : null;
+}

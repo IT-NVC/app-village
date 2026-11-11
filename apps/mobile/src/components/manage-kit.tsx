@@ -522,6 +522,102 @@ export function PersonPicker({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Chọn NHÂN KHẨU (kể cả người chưa có tài khoản) — dùng cho hộ gia đình
+// ---------------------------------------------------------------------------
+
+export type ResidentOpt = { id: string; full_name: string; area_name: string | null; household_id: string | null; household_label: string | null };
+
+async function fetchResidentOptions(): Promise<ResidentOpt[]> {
+  const rows = await fetchAllRows((from, to) =>
+    supabase.from('residents').select('id, full_name, household_id, areas(name), households(code, head_name)').order('full_name').range(from, to),
+  );
+  return rows.map((r) => {
+    const a = Array.isArray(r.areas) ? r.areas[0] : r.areas;
+    const h = Array.isArray(r.households) ? r.households[0] : r.households;
+    return { id: r.id, full_name: r.full_name, household_id: r.household_id, area_name: a?.name ?? null, household_label: h ? `Hộ ${h.head_name}${h.code ? ` (${h.code})` : ''}` : null };
+  });
+}
+
+export function ResidentPicker({
+  visible,
+  title,
+  exclude = [],
+  onClose,
+  onPick,
+}: {
+  visible: boolean;
+  title: string;
+  exclude?: string[];
+  onClose: () => void;
+  onPick: (ids: string[]) => void | Promise<void>;
+}) {
+  const [people, setPeople] = useState<ResidentOpt[] | null>(null);
+  const [q, setQ] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (visible) fetchResidentOptions().then(setPeople);
+  }, [visible]);
+
+  const list = useMemo(() => {
+    const k = norm(q);
+    return (people ?? []).filter((p) => !exclude.includes(p.id) && (!k || norm(p.full_name).includes(k))).slice(0, 80);
+  }, [people, q, exclude]);
+
+  async function confirm() {
+    setBusy(true);
+    await onPick(selected);
+    setBusy(false);
+    setSelected([]);
+    setQ('');
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: Colors.background }}>
+        <PageHeader title={title} subtitle="Gõ tên để tìm (không cần dấu)" onBack={onClose} />
+        <View style={{ padding: Spacing.lg, paddingBottom: Spacing.sm }}>
+          <SearchBox value={q} onChange={setQ} placeholder="Tên nhân khẩu" />
+        </View>
+        {people === null ? (
+          <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
+        ) : (
+          <FlatList
+            data={list}
+            keyExtractor={(p) => p.id}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 6, paddingBottom: 120 }}
+            ListEmptyComponent={<EmptyState icon="people-outline" title={q ? 'Không tìm thấy' : 'Gõ tên để tìm'} />}
+            renderItem={({ item }) => {
+              const on = selected.includes(item.id);
+              return (
+                <Pressable
+                  onPress={() => setSelected((s) => (on ? s.filter((x) => x !== item.id) : [...s, item.id]))}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: on }}
+                  style={[styles.person, on && { borderColor: Colors.primary, backgroundColor: Colors.primarySoft }]}>
+                  <Ionicons name={on ? 'checkbox' : 'square-outline'} size={26} color={on ? Colors.primary : Colors.textMuted} />
+                  <View style={{ flex: 1 }}>
+                    <Txt variant="bodyStrong">{item.full_name}</Txt>
+                    <Txt variant="caption" color={Colors.textSecondary}>
+                      {[item.area_name, item.household_label ? `đang ở ${item.household_label}` : 'chưa thuộc hộ nào'].filter(Boolean).join(' · ')}
+                    </Txt>
+                  </View>
+                </Pressable>
+              );
+            }}
+          />
+        )}
+        <View style={styles.pickerBar}>
+          <Button title={selected.length ? `Thêm ${selected.length} người` : 'Chọn người để thêm'} icon="person-add" disabled={selected.length === 0} loading={busy} onPress={confirm} />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   search: {
     flexDirection: 'row',

@@ -23,6 +23,7 @@
     "db:test:push": "node supabase/tests/push.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "db:test:manage": "node supabase/tests/manage.mjs",
+    "db:test:crud": "node supabase/tests/crud.mjs",
     "db:types:local": "supabase gen types typescript --local > packages/shared/src/database.types.ts"
   },
   "devDependencies": {

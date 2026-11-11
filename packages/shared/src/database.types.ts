@@ -853,6 +853,9 @@ isOneToOne: false
 "add_group_members":
 { Args: { "p_group_id": string,"p_user_ids": (string)[] }; Returns: undefined
                            },
+"add_poll_option":
+{ Args: { "p_label": string,"p_poll_id": string }; Returns: string
+                           },
 "announcement_read_stats":
 { Args: { "p_announcement": string }; Returns: {
               "read_count": number,"total": number
@@ -889,6 +892,9 @@ isOneToOne: false
                            },
 "delete_message":
 { Args: { "p_message_id": string }; Returns: undefined
+                           },
+"delete_poll_option":
+{ Args: { "p_option_id": string }; Returns: undefined
                            },
 "fund_household_contributions":
 { Args: { "p_fund_id": string }; Returns: {
@@ -1002,6 +1008,9 @@ isOneToOne: false
 "remove_org_member":
 { Args: { "p_org_id": string,"p_user_id": string }; Returns: undefined
                            },
+"rename_poll_option":
+{ Args: { "p_label": string,"p_option_id": string }; Returns: undefined
+                           },
 "request_booking":
 { Args: { "p_ends_at": string,"p_purpose": string,"p_starts_at": string,"p_venue_id": string }; Returns: string
                            },
@@ -1037,6 +1046,9 @@ isOneToOne: false
                            },
 "update_my_profile":
 { Args: { "p_avatar_url"?: string,"p_phone"?: string }; Returns: undefined
+                           },
+"update_poll":
+{ Args: { "p_closes_at"?: string,"p_description"?: string,"p_no_deadline"?: boolean,"p_poll_id": string,"p_reopen"?: boolean,"p_title": string }; Returns: undefined
                            },
 "update_report_status":
 { Args: { "p_note"?: string,"p_report_id": string,"p_status": Database["public"]['Enums']["report_status"] }; Returns: undefined

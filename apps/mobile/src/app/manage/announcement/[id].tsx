@@ -1,9 +1,10 @@
 import { LEADERSHIP_ROLE_LABEL, PRIORITY_LABEL, type LeadershipRole, type PriorityLevel } from '@thon/shared';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
-import { Async, ManageShell, RowCard, useLoad } from '@/components/manage-kit';
-import { Button, Card, Notice, ScrollPage, Txt } from '@/components/ui';
+import { Async, FormSheet, ManageShell, RowCard, useLoad } from '@/components/manage-kit';
+import { Button, Card, Choice, Field, IconButton, Notice, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { confirmAction, showInfo } from '@/lib/dialog';
 import { fmtDateTime } from '@/lib/format';
@@ -34,6 +35,32 @@ async function load(id: string) {
 export default function AnnouncementAdminScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const state = useLoad(() => load(id), id);
+  const [edit, setEdit] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [priority, setPriority] = useState<PriorityLevel>('thuong');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function openEdit() {
+    const a = state.data?.a;
+    if (!a) return;
+    setTitle(a.title);
+    setContent(a.content);
+    setPriority(a.priority);
+    setError(null);
+    setEdit(true);
+  }
+
+  async function saveEdit() {
+    if (!title.trim() || !content.trim()) return setError('Vui lòng nhập đủ tiêu đề và nội dung.');
+    setBusy(true);
+    const { error: err } = await supabase.from('announcements').update({ title: title.trim(), content: content.trim(), priority }).eq('id', id);
+    setBusy(false);
+    if (err) return setError(friendlyError(err.message));
+    setEdit(false);
+    await state.reload();
+  }
 
   function remove() {
     confirmAction('Xoá thông báo này?', 'Người dân sẽ không còn thấy thông báo.', 'Xoá', async () => {
@@ -44,7 +71,7 @@ export default function AnnouncementAdminScreen() {
   }
 
   return (
-    <ManageShell title="Chi tiết thông báo">
+    <ManageShell title="Chi tiết thông báo" right={state.data ? <IconButton icon="create-outline" label="Sửa thông báo" onPress={openEdit} /> : undefined}>
       <Async state={state}>
         {(d) => {
           const pct = d.stats?.total ? Math.round((d.stats.read_count / d.stats.total) * 100) : 0;
@@ -112,6 +139,13 @@ export default function AnnouncementAdminScreen() {
           );
         }}
       </Async>
+      <FormSheet visible={edit} title="Sửa thông báo" onClose={() => setEdit(false)} onSave={saveEdit} saving={busy}>
+        <Field label="Tiêu đề" value={title} onChangeText={setTitle} />
+        <Field label="Nội dung" value={content} onChangeText={setContent} multiline style={{ minHeight: 140, textAlignVertical: 'top' }} />
+        <Choice label="Mức độ" options={(Object.keys(PRIORITY_LABEL) as PriorityLevel[]).map((k) => ({ value: k, label: PRIORITY_LABEL[k] }))} value={priority} onChange={setPriority} />
+        <Notice tone="info" text="Chỉ sửa được nội dung. Người nhận không đổi và không gửi lại thông báo." />
+        <Notice text={error} />
+      </FormSheet>
     </ManageShell>
   );
 }

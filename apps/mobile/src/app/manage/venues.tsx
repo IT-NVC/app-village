@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Async, FormSheet, ManageList, ManageShell, RowCard, ToggleRow, useLoad } from '@/components/manage-kit';
-import { Field, IconButton, IconCircle, Notice, Txt } from '@/components/ui';
+import { Button, Field, IconButton, IconCircle, Notice, Txt } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { confirmAction } from '@/lib/dialog';
 import { friendlyError } from '@/lib/manage-data';
 import { supabase } from '@/lib/supabase';
 
@@ -45,6 +46,17 @@ export default function VenuesScreen() {
     await state.reload();
   }
 
+  function remove() {
+    const v = editing;
+    if (!v || v === 'new') return;
+    confirmAction(`Xoá "${v.name}"?`, 'Các lượt đặt lịch cũ tại đây cũng sẽ mất. Nếu chỉ muốn tạm dừng, hãy tắt "Cho đặt lịch".', 'Xoá', async () => {
+      const { error: err } = await supabase.from('venues').delete().eq('id', v.id);
+      if (err) return setError(friendlyError(err.message));
+      setEditing(null);
+      await state.reload();
+    }, true);
+  }
+
   return (
     <ManageShell title="Địa điểm cho đặt lịch" right={<IconButton icon="add" label="Thêm địa điểm" onPress={() => open('new')} />}>
       <Async state={state}>
@@ -74,6 +86,7 @@ export default function VenuesScreen() {
         <Field label="Thứ tự" value={order} onChangeText={setOrder} keyboardType="number-pad" />
         <ToggleRow label="Cho đặt lịch" value={active} onChange={setActive} />
         <Notice text={error} />
+        {editing && editing !== 'new' ? <Button title="Xoá địa điểm" icon="trash" variant="dangerOutline" onPress={remove} /> : null}
       </FormSheet>
     </ManageShell>
   );

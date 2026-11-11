@@ -8,7 +8,7 @@ import { Avatar, Button, Card, Choice, Notice, PromptModal, ScrollPage, Txt } fr
 import { Colors, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { confirmAction } from '@/lib/dialog';
-import { errText } from '@/lib/manage-data';
+import { functionError, manageAccount } from '@/lib/manage-data';
 import { one, useRank } from '@/lib/manage';
 import { supabase } from '@/lib/supabase';
 
@@ -43,20 +43,6 @@ async function load(id: string): Promise<Account> {
     phone: r?.phone ?? null,
     area_name: one(r?.areas)?.name ?? null,
   };
-}
-
-/** Lấy thông báo lỗi từ Edge Function */
-async function functionError(error: unknown) {
-  const ctx = (error as { context?: Response }).context;
-  if (ctx && typeof ctx.json === 'function') {
-    try {
-      const body = await ctx.json();
-      if (body?.error) return body.error as string;
-    } catch {
-      /* bỏ qua */
-    }
-  }
-  return errText(error);
 }
 
 export default function AccountScreen() {
@@ -103,6 +89,22 @@ function Detail({ account: a, onChanged }: { account: Account; onChanged: () => 
   }
 
   const locked = a.status === 'locked';
+
+  function deleteAccount() {
+    confirmAction(
+      `Xoá hẳn tài khoản ${a.full_name ?? a.username}?`,
+      'Toàn bộ phản ánh, phiếu bầu và dữ liệu của tài khoản này cũng bị xoá. Nhân khẩu được giữ lại và được cấp mã kích hoạt mới. Nếu chỉ muốn tạm ngừng, hãy dùng "Khoá tài khoản".',
+      'Xoá tài khoản',
+      async () => {
+        setBusy('delete');
+        const err = await manageAccount({ action: 'delete', user_id: a.id });
+        setBusy(null);
+        if (err) return setMsg({ tone: 'danger', text: err });
+        router.back();
+      },
+      true,
+    );
+  }
 
   return (
     <ScrollPage header={null}>
@@ -181,6 +183,7 @@ function Detail({ account: a, onChanged }: { account: Account; onChanged: () => 
                 )
               }
             />
+            {myRank >= 2 && <Button title="Xoá hẳn tài khoản" icon="trash" variant="dangerOutline" loading={busy === 'delete'} onPress={deleteAccount} />}
           </Card>
         </>
       )}

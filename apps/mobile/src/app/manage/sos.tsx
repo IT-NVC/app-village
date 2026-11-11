@@ -7,7 +7,7 @@ import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, Styl
 import { Forbidden } from '@/components/forbidden';
 import { Button, Card, EmptyState, PageHeader, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
-import { showInfo } from '@/lib/dialog';
+import { confirmAction, showInfo } from '@/lib/dialog';
 import { fmtDateTime, timeAgo } from '@/lib/format';
 import { one, useRank } from '@/lib/manage';
 import { notifyEvent } from '@/lib/push';
@@ -94,6 +94,14 @@ export default function ManageSosScreen() {
     load();
   }
 
+  function remove(r: Row) {
+    confirmAction(`Xoá tín hiệu của ${r.name}?`, 'Chỉ dùng khi báo nhầm hoặc thử máy. Không khôi phục được.', 'Xoá', async () => {
+      const { error } = await supabase.from('sos_events').delete().eq('id', r.id);
+      if (error) return showInfo('Không xoá được', error.message);
+      load();
+    }, true);
+  }
+
   if (rank < 1) return <Forbidden />;
 
   return (
@@ -152,6 +160,7 @@ export default function ManageSosScreen() {
                   {r.status === 'da_tiep_nhan' && (
                     <Button title="Đã xử lý xong" icon="checkmark-done" loading={busy === r.id} onPress={() => handle(r, 'da_xu_ly')} />
                   )}
+                  {rank >= 2 && r.status !== 'dang_cho' && <Button title="Xoá (báo nhầm)" icon="trash" variant="dangerOutline" onPress={() => remove(r)} />}
                 </Card>
               );
             })

@@ -56,11 +56,12 @@
 - [x] Migration **0008** Quỹ thôn (`funds`, `fund_transactions`, `fund_summaries`, `fund_transactions_view`,
       `fund_household_contributions`, `fund_missing_households`, kho `fund-receipts`; nhật ký mọi thay đổi)
       — **đã chạy ở local, CHƯA đẩy lên cloud**
-- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (152 bài, thêm lịch + đặt lịch + quỹ thôn; thông báo + SOS + phản ánh + tin tức + chat + biểu quyết + hồ sơ + realtime + quyền), `npm run db:test:manage` (21 bài, khu cán bộ trong app), `npm run db:test:push` (32 bài, cần `npm run functions:serve:test`) — đều đạt trên local
+- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (152 bài, thêm lịch + đặt lịch + quỹ thôn; thông báo + SOS + phản ánh + tin tức + chat + biểu quyết + hồ sơ + realtime + quyền), `npm run db:test:manage` (21 bài, khu cán bộ trong app), `npm run db:test:crud` (66 bài, sửa / xoá bổ sung + tạo / xoá tài khoản; cần `npm run functions:serve:test`), `npm run db:test:push` (32 bài, cần `npm run functions:serve:test`) — đều đạt trên local
 
 ### Edge Function
 - [x] `notify`: gửi push sau sự kiện; máy chủ tự kiểm quyền + tự xác định người nhận, chống gửi trùng, xoá mã thiết bị chết — **chạy được ở local (dry-run), CHƯA lên cloud**
 - [x] `admin-reset-password`: cán bộ đặt lại mật khẩu cho người dân (kiểm tra cấp bậc, ghi nhật ký) — **chạy được ở local**
+- [x] `admin-account`: **lập tài khoản** cho nhân khẩu (Phó thôn trở lên) và **xoá hẳn tài khoản** (Trưởng thôn trở lên, không xoá người cùng / cao cấp hơn; nhân khẩu được giữ và cấp mã kích hoạt mới) — **chạy được ở local, CHƯA lên cloud**
 
 ### App mobile (`apps/mobile`)
 - [x] Đăng nhập Google + username/mật khẩu, đăng ký, dịch lỗi sang tiếng Việt
@@ -92,7 +93,9 @@
   - *Thông tin cho bà con*: `announce` (toàn thôn / khu / ban ngành, **hẹn giờ**) · `announcements` + `announcement/[id]` (% đã đọc, người chưa đọc kèm nút gọi, xoá) · `news` + `news-edit/[id]` (ảnh bìa, nháp / đăng, ghim) · `polls` + `poll-new` + `poll/[id]` · `events` + `event/[id]`
   - *Khu vực & nhóm chat*: `areas` · `orgs` + `org/[id]` (thành viên, trưởng ban) · `chats` + `chat-admin/[id]` (tạo nhóm, thành viên, khoá chat, thu hồi tin)
   - *Quỹ & địa điểm*: `fund` (ghi / **sửa / xoá** thu chi, chụp phiếu) · `funds` + `fund-info/[id]` (số dư, hộ đã góp, **hộ chưa góp kèm SĐT**) · `venues`
+  - *Hộ gia đình*: `households` + `household/[id]` (lập hộ, gắn / bỏ thành viên, sửa, xoá)
   - *Hệ thống*: `settings` (công tắc chờ duyệt, danh bạ) · `audit` (nhật ký, Bí thư / Trưởng thôn)
+  - **Ma trận CRUD** (migration 0009): thông báo sửa nội dung được; khảo sát sửa câu hỏi / hạn chót / mở lại + thêm, đổi tên, xoá phương án (chưa ai chọn); phản ánh & SOS xoá được (Bí thư / Trưởng thôn, kèm ảnh); địa điểm xoá; nhóm chat đổi tên; tài khoản lập / xoá; đặt lịch cán bộ "Duyệt luôn" (nút + ở màn Đặt lịch).
   - Dùng chung: `components/manage-kit.tsx` (useLoad, Async, ManageShell, FormSheet, PersonPicker, DateTimePick, PillTabs…), `lib/manage-data.ts`.
   - **Chỉ còn làm trên web**: nhập nhân khẩu từ Excel, in hàng loạt phiếu mã kích hoạt, xuất CSV báo cáo quỹ.
   - ⚠ Mới kiểm tra bằng TypeScript / lint / đóng gói; **chưa chạy thử trên máy** (cần xem kỹ từng màn hình khi dùng thật).
@@ -134,7 +137,8 @@
 ## 3. Chưa làm ⏳ (theo thứ tự nên làm)
 
 ### Việc nhỏ còn dở
-- [ ] **Đẩy migration 0008 lên cloud**: `npx supabase db push --remote` (0005–0007 và 2 Edge Functions đã lên)
+- [ ] **Đẩy migration 0008 + 0009 lên cloud**: kiểm tra `npx supabase migration list --remote` rồi `npx supabase db push --remote`
+- [ ] **Đưa Edge Function `admin-account` lên cloud** (cùng lệnh `npm run functions:deploy`) — cần cho nút "Lập tài khoản hộ" và "Xoá hẳn tài khoản"
 - [ ] **Bật push**: làm theo [HUONG-DAN-PUSH.md](HUONG-DAN-PUSH.md) (tài khoản Expo, Firebase, development build)
 - [ ] **Đưa Edge Function đặt lại mật khẩu lên cloud**: `npm run functions:deploy`
       (hiện cloud trả 404 → nút "Đặt lại mật khẩu" trong admin chưa chạy với bản cloud)

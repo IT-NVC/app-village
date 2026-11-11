@@ -8,6 +8,7 @@ import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, StyleSheet, T
 import { Forbidden } from '@/components/forbidden';
 import { Button, Card, Choice, EmptyState, IconCircle, Notice, PageHeader, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, FontSize, Radius, Shadow, Spacing } from '@/constants/theme';
+import { confirmAction, showInfo } from '@/lib/dialog';
 import { fmtDateTime, timeAgo } from '@/lib/format';
 import { one, useRank } from '@/lib/manage';
 import { notifyEvent } from '@/lib/push';
@@ -77,6 +78,15 @@ export default function ManageReportDetail() {
   const { report, updates, reporter, urls } = data;
   const cat = CATEGORY_STYLE[report.category];
   const st = STATUS_STYLE[report.status];
+
+  function remove() {
+    confirmAction('Xoá phản ánh này?', 'Xoá cả ảnh đính kèm và lịch sử xử lý. Không khôi phục được. Chỉ dùng cho phản ánh spam hoặc gửi nhầm.', 'Xoá', async () => {
+      if (report.images.length) await supabase.storage.from('report-images').remove(report.images);
+      const { error: err } = await supabase.from('reports').delete().eq('id', id);
+      if (err) return showInfo('Không xoá được', err.message);
+      back();
+    }, true);
+  }
 
   async function save() {
     if (!status) return;
@@ -169,6 +179,7 @@ export default function ManageReportDetail() {
           {viewer && <Image source={{ uri: viewer }} style={{ width: '100%', height: '80%' }} contentFit="contain" />}
         </Pressable>
       </Modal>
+      <Button title="Xoá phản ánh" icon="trash" variant="dangerOutline" onPress={remove} />
     </ScrollPage>
   );
 }

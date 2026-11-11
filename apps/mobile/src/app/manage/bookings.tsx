@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 
+import { router } from 'expo-router';
 import { Async, ManageList, ManageShell, PillTabs, RowCard, useLoad } from '@/components/manage-kit';
-import { Button, PromptModal, Txt } from '@/components/ui';
+import { Button, IconButton, PromptModal, Txt } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { dayTitle, hhmm } from '@/lib/calendar';
 import { confirmAction, showInfo } from '@/lib/dialog';
@@ -84,7 +85,7 @@ export default function ManageBookingsScreen() {
   }
 
   return (
-    <ManageShell title="Đặt nhà văn hoá / sân">
+    <ManageShell title="Đặt nhà văn hoá / sân" right={<IconButton icon="add" label="Đặt lịch cho thôn" onPress={() => router.push('/booking/new')} />}>
       <Async state={state}>
         {(rows) => (
           <ManageList

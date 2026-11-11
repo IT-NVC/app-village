@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Async, ManageList, ManageShell, PersonPicker, PillTabs, RowCard, ToggleRow, useLoad } from '@/components/manage-kit';
-import { Avatar, Button, Card, IconButton, Txt } from '@/components/ui';
+import { Avatar, Button, Card, IconButton, PromptModal, Txt } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { confirmAction, showInfo } from '@/lib/dialog';
 import { fmtDateTime } from '@/lib/format';
@@ -40,6 +40,7 @@ export default function ChatAdminScreen() {
   const state = useLoad(() => load(id), id);
   const [tab, setTab] = useState<'members' | 'messages'>('members');
   const [picker, setPicker] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   async function act(fn: () => PromiseLike<{ error: { message: string } | null }>) {
     const { error } = await fn();
@@ -56,7 +57,7 @@ export default function ChatAdminScreen() {
   }
 
   return (
-    <ManageShell title={state.data?.group.name ?? 'Nhóm chat'} subtitle={state.data ? `${state.data.members.length} thành viên` : undefined}>
+    <ManageShell title={state.data?.group.name ?? 'Nhóm chat'} subtitle={state.data ? `${state.data.members.length} thành viên` : undefined} right={state.data ? <IconButton icon="create-outline" label="Đổi tên nhóm" onPress={() => setRenaming(true)} /> : undefined}>
       <Async state={state}>
         {(d) => {
           const custom = d.group.type === 'custom';
@@ -162,6 +163,20 @@ export default function ChatAdminScreen() {
           );
         }}
       </Async>
+      {renaming && state.data ? (
+        <PromptModal
+          visible
+          title="Đổi tên nhóm"
+          required
+          initialValue={state.data.group.name}
+          confirmText="Lưu"
+          onCancel={() => setRenaming(false)}
+          onConfirm={async (text) => {
+            setRenaming(false);
+            await act(() => supabase.from('chat_groups').update({ name: text.trim() }).eq('id', id));
+          }}
+        />
+      ) : null}
     </ManageShell>
   );
 }

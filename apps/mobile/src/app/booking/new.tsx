@@ -3,9 +3,11 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ToggleRow } from '@/components/manage-kit';
 import { Button, Card, Choice, Field, Notice, PageHeader, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { dayTitle, fetchBusy, fetchVenues, shortWeekday, type Venue } from '@/lib/calendar';
+import { useRank } from '@/lib/manage';
 import { notifyEvent } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
@@ -28,6 +30,8 @@ const overlaps = (a1: Date, a2: Date, busy: Busy[]) =>
   busy.some((b) => new Date(b.starts_at) < a2 && new Date(b.ends_at) > a1);
 
 export default function NewBookingScreen() {
+  const isLeader = useRank() >= 1;
+  const [autoApprove, setAutoApprove] = useState(true);
   const [venues, setVenues] = useState<Venue[] | null>(null);
   const [venueId, setVenueId] = useState<string | null>(null);
   const [day, setDay] = useState<Date | null>(null);
@@ -73,8 +77,18 @@ export default function NewBookingScreen() {
       p_starts_at: at(day, s.from).toISOString(),
       p_ends_at: at(day, s.to).toISOString(),
     });
+    if (err) {
+      setSending(false);
+      return setError(err.message);
+    }
+    if (isLeader && autoApprove) {
+      const rv = await supabase.rpc('review_booking', { p_booking_id: data as string, p_approve: true });
+      setSending(false);
+      if (rv.error) return setError(`Đã gửi yêu cầu nhưng chưa duyệt được: ${rv.error.message}`);
+      notifyEvent('booking_review', data as string);
+      return router.back();
+    }
     setSending(false);
-    if (err) return setError(err.message);
     notifyEvent('booking_new', data as string);
     router.back();
   }
@@ -197,8 +211,9 @@ export default function NewBookingScreen() {
         />
       </Card>
 
+      {isLeader && <ToggleRow label="Duyệt luôn (đặt thay cho thôn)" value={autoApprove} onChange={setAutoApprove} />}
       <Notice text={error} />
-      <Button title="Gửi yêu cầu" icon="send" onPress={submit} loading={sending} />
+      <Button title={isLeader && autoApprove ? 'Đặt lịch' : 'Gửi yêu cầu'} icon="send" onPress={submit} loading={sending} />
     </ScrollPage>
   );
 }

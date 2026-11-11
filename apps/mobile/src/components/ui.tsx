@@ -653,6 +653,7 @@ export function PromptModal({
   confirmText = 'Xác nhận',
   danger,
   required,
+  initialValue,
   onCancel,
   onConfirm,
 }: {
@@ -663,10 +664,12 @@ export function PromptModal({
   confirmText?: string;
   danger?: boolean;
   required?: boolean;
+  /** Giá trị điền sẵn (vd. tên hiện tại khi đổi tên). Chỉ áp dụng khi hộp thoại được dựng mới. */
+  initialValue?: string;
   onCancel: () => void;
   onConfirm: (text: string) => void | Promise<void>;
 }) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialValue ?? '');
   const [busy, setBusy] = useState(false);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>

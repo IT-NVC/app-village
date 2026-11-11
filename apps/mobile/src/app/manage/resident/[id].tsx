@@ -3,11 +3,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Share, View } from 'react-native';
 
-import { Async, ManageShell, useLoad } from '@/components/manage-kit';
+import { Async, FormSheet, ManageShell, useLoad } from '@/components/manage-kit';
 import { Button, Card, Choice, Field, Notice, ScrollPage, Txt } from '@/components/ui';
 import { Colors, Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { confirmAction, showInfo } from '@/lib/dialog';
-import { fetchAreas, ensureHousehold, errText, friendlyError, parseVnDate, toVnDate } from '@/lib/manage-data';
+import { fetchAreas, ensureHousehold, errText, friendlyError, manageAccount, parseVnDate, toVnDate } from '@/lib/manage-data';
 import { one } from '@/lib/manage';
 import { supabase } from '@/lib/supabase';
 
@@ -80,6 +80,11 @@ function Form({ data, onChanged }: { data: Loaded; onChanged: () => Promise<void
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   async function save() {
     if (fullName.trim().split(/\s+/).length < 2) return setError('Vui lòng nhập đầy đủ họ và tên.');
@@ -126,6 +131,21 @@ function Form({ data, onChanged }: { data: Loaded; onChanged: () => Promise<void
     });
   }
 
+  async function createAccount() {
+    if (!r) return;
+    setCreating(true);
+    setCreateError(null);
+    const err = await manageAccount({ action: 'create', resident_id: r.id, username: username.trim().toLowerCase(), password });
+    setCreating(false);
+    if (err) return setCreateError(err);
+    setCreateOpen(false);
+    setUsername('');
+    setPassword('');
+    showInfo('Đã tạo tài khoản', `Tên đăng nhập: ${username.trim().toLowerCase()}
+Hãy trao mật khẩu cho người dân và dặn đổi sau khi đăng nhập.`);
+    await onChanged();
+  }
+
   function remove() {
     if (!r) return;
     confirmAction(`Xoá ${r.full_name}?`, 'Chỉ xoá được nhân khẩu chưa có tài khoản.', 'Xoá', async () => {
@@ -157,6 +177,24 @@ function Form({ data, onChanged }: { data: Loaded; onChanged: () => Promise<void
         </Card>
       )}
 
+      {r && !r.account && (
+        <Card style={{ padding: Spacing.lg, gap: Spacing.sm }}>
+          <Txt variant="subtitle">Lập tài khoản hộ</Txt>
+          <Txt variant="small" color={Colors.textSecondary}>
+            Dành cho người chưa dùng được điện thoại: cán bộ tạo tên đăng nhập và mật khẩu rồi trao cho người dân. Tài khoản được kích hoạt ngay.
+          </Txt>
+          <Button
+            title="Tạo tài khoản cho người này"
+            icon="person-add"
+            variant="secondary"
+            onPress={() => {
+              setCreateError(null);
+              setCreateOpen(true);
+            }}
+          />
+        </Card>
+      )}
+
       {r?.account && (
         <Card style={{ padding: Spacing.lg, gap: Spacing.sm }}>
           <Txt variant="subtitle">Tài khoản</Txt>
@@ -182,6 +220,15 @@ function Form({ data, onChanged }: { data: Loaded; onChanged: () => Promise<void
         <Field label="Mã hộ gia đình" icon="home-outline" hint="Người cùng mã hộ thuộc cùng một hộ. Mã mới sẽ tạo hộ mới." value={household} onChangeText={setHousehold} autoCapitalize="characters" />
         <Field label="Ghi chú" value={note} onChangeText={setNote} multiline style={{ minHeight: 80, textAlignVertical: 'top', paddingTop: 14 }} />
       </Card>
+
+      <FormSheet visible={createOpen} title="Tạo tài khoản" onClose={() => setCreateOpen(false)} onSave={createAccount} saving={creating} saveText="Tạo tài khoản">
+        <Txt variant="small" color={Colors.textSecondary}>
+          Tài khoản cho {r?.full_name}. Tên đăng nhập viết thường không dấu, ví dụ: nguyenvana
+        </Txt>
+        <Field label="Tên đăng nhập" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" autoCorrect={false} />
+        <Field label="Mật khẩu" hint="Ít nhất 6 ký tự" value={password} onChangeText={setPassword} secure />
+        <Notice text={createError} />
+      </FormSheet>
 
       {saved && <Notice tone="success" text="Đã lưu." />}
       <Notice text={error} />

@@ -136,6 +136,8 @@ function RootNavigator() {
           <Stack.Screen name="manage/fund" />
           <Stack.Screen name="manage/residents" />
           <Stack.Screen name="manage/resident/[id]" />
+          <Stack.Screen name="manage/households" />
+          <Stack.Screen name="manage/household/[id]" />
           <Stack.Screen name="manage/accounts" />
           <Stack.Screen name="manage/account/[id]" />
           <Stack.Screen name="manage/areas" />

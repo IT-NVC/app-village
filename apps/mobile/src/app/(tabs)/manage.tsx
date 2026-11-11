@@ -64,6 +64,7 @@ export default function ManageScreen() {
       title: 'Người dân',
       items: [
         { key: 'res', icon: 'people', label: 'Nhân khẩu', desc: 'Thêm, sửa, mã kích hoạt', to: '/manage/residents', color: Colors.primaryText, bg: Colors.primarySoft },
+        { key: 'hh', icon: 'home', label: 'Hộ gia đình', desc: 'Lập hộ, gắn thành viên', to: '/manage/households', color: Colors.primaryText, bg: Colors.primarySoft },
         { key: 'accs', icon: 'shield-checkmark', label: 'Tài khoản & phân quyền', desc: 'Chức vụ, khoá, đặt lại mật khẩu', to: '/manage/accounts', color: Colors.info, bg: Colors.infoSoft },
       ],
     },
