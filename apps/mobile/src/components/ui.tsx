@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
@@ -453,7 +454,18 @@ export function initials(name?: string | null) {
   return pick.map((p) => p[0]!.toUpperCase()).join('');
 }
 
-export function Avatar({ name, size = 52, light }: { name?: string | null; size?: number; light?: boolean }) {
+export function Avatar({ name, size = 52, light, url }: { name?: string | null; size?: number; light?: boolean; url?: string | null }) {
+  if (url) {
+    return (
+      <Image
+        source={{ uri: url }}
+        style={{ width: size, height: size, borderRadius: size / 2, borderWidth: light ? 2 : 0, borderColor: 'rgba(255,255,255,0.7)' }}
+        contentFit="cover"
+        transition={200}
+        accessibilityLabel={name ? `Ảnh của ${name}` : 'Ảnh đại diện'}
+      />
+    );
+  }
   return (
     <View
       style={{

@@ -15,6 +15,7 @@ import { Button, EmptyState, Loading } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { AnnouncementsProvider } from '@/lib/announcements';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { ChatProvider } from '@/lib/chat';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -67,6 +68,7 @@ function RootNavigator() {
 
   return (
     <AnnouncementsProvider userId={phase === 'active' ? (me?.id ?? null) : null}>
+      <ChatProvider enabled={phase === 'active'}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
         <Stack.Protected guard={phase === 'signedOut'}>
           <Stack.Screen name="(auth)" />
@@ -85,8 +87,14 @@ function RootNavigator() {
           <Stack.Screen name="report/[id]" />
           <Stack.Screen name="news/index" />
           <Stack.Screen name="news/[id]" />
+          <Stack.Screen name="group/[id]/index" />
+          <Stack.Screen name="group/[id]/members" />
+          <Stack.Screen name="polls/index" />
+          <Stack.Screen name="polls/[id]" />
+          <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_bottom' }} />
         </Stack.Protected>
       </Stack>
+      </ChatProvider>
     </AnnouncementsProvider>
   );
 }

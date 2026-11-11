@@ -1,6 +1,6 @@
 # Tiến độ dự án — App Thôn Thống Nhất (Xã Sóc Sơn)
 
-> Cập nhật lần cuối: **11/11/2026** (đợt 3: Tin tức — xong giai đoạn 1, trừ push)
+> Cập nhật lần cuối: **11/11/2026** (đợt 5: Biểu quyết + Sửa hồ sơ)
 > File này ghi lại **đã làm gì, chưa làm gì, và cách làm tiếp trên máy khác**.
 > Khi làm xong một hạng mục, nhớ đánh dấu `[x]` và cập nhật ngày ở trên.
 
@@ -47,8 +47,10 @@
 - [x] Phản ánh: trạng thái + lịch sử + đánh giá; SOS: chống gửi lặp 60 giây
 - [x] Nhật ký thao tác (thay đổi chức vụ, trạng thái, ban ngành, cài đặt…)
 - [x] Kho ảnh (avatars, news, report-images, chat, attachments) + Realtime cho chat/thông báo/phản ánh/SOS
-- [x] **Đã đẩy lên Supabase cloud** và ghi nhận lịch sử migration
-- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (52 bài: thông báo + SOS + phản ánh + tin tức + realtime + quyền xem ảnh) — đều đạt trên local
+- [x] **Đã đẩy lên Supabase cloud** và ghi nhận lịch sử migration (0001–0003)
+- [x] Migration **0004** (`my_chat_groups` + sửa ràng buộc để thu hồi tin nhắn chạy được) — đã lên cloud
+- [x] Migration **0005** Khảo sát / Biểu quyết (`polls`, `poll_options`, `poll_votes`, `create_poll`, `cast_vote`, `poll_results`…) — **đã chạy ở local, CHƯA đẩy lên cloud**
+- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (109 bài: thông báo + SOS + phản ánh + tin tức + chat + biểu quyết + hồ sơ + realtime + quyền) — đều đạt trên local
 
 ### Edge Function
 - [x] `admin-reset-password`: cán bộ đặt lại mật khẩu cho người dân (kiểm tra cấp bậc, ghi nhật ký) — **chạy được ở local**
@@ -64,9 +66,15 @@
 - [x] **Tab Phản ánh**: danh sách phản ánh của mình (ảnh nhỏ, trạng thái), tự cập nhật khi cán bộ xử lý
 - [x] **Tin tức**: dải tin cuộn ngang trên trang chủ (tin ghim đứng đầu), trang danh sách (`app/news/index.tsx`),
       trang đọc tin chữ to có ảnh bìa (`app/news/[id].tsx`)
+- [x] **Tin nhắn nhóm**: tab hộp thư (tin cuối, số chưa đọc, số trên tab), màn hình chat (`app/group/[id]/index.tsx`):
+      bong bóng có tên màu riêng, vạch ngày, tải tin cũ khi cuộn, gửi ảnh, giữ tay để Sao chép / Thu hồi / Ghim,
+      dải tin ghim, báo bị khoá chat, realtime + hỏi lại 20 giây; màn hình thành viên (`group/[id]/members.tsx`):
+      quản trị nhóm khoá chat / cấp quyền / xoá (nhóm tuỳ chọn), tự rời nhóm
+- [x] **Biểu quyết** (`app/polls/`): danh sách đang mở / đã kết thúc, đánh dấu chưa bỏ phiếu, bỏ phiếu bằng ô lớn
+      (một / nhiều lựa chọn), đổi phiếu khi còn mở, kết quả thanh %, tỉ lệ tham gia; ô "Biểu quyết" + "Tin tức" trên trang chủ
 - [x] **Gửi phản ánh** (`app/report/new.tsx`): 6 loại sự cố, chụp/chọn tối đa 3 ảnh (tự nén ≤1280px, JPEG 70%), tự lấy vị trí + ghi địa chỉ
 - [x] **Chi tiết phản ánh** (`app/report/[id].tsx`): xem ảnh phóng to, mở bản đồ, dòng thời gian xử lý kèm ghi chú cán bộ, đánh giá 1–5 sao khi hoàn thành
-- [x] Tab Cá nhân: thông tin, ban ngành, đăng xuất
+- [x] Tab Cá nhân: thông tin, ban ngành, đăng xuất, **Sửa thông tin** (`app/profile-edit.tsx`: ảnh đại diện cắt vuông, số điện thoại)
 - [x] Giao diện đã làm đẹp (header gradient, thẻ bóng đổ, font Be Vietnam Pro)
 - [x] Chạy được trên máy ảo Android bằng Expo Go, bản web cũng build được
 
@@ -84,6 +92,9 @@
 - [x] **Phản ánh** (chỉ Bí thư / Trưởng thôn): lọc theo trạng thái + loại, xem ảnh (phóng to), vị trí trên bản đồ,
       dòng thời gian, cập nhật trạng thái kèm ghi chú gửi người dân, xem đánh giá; thông báo khi có phản ánh mới
 - [x] **Tin tức**: viết/sửa tin (tiêu đề, tóm tắt, ảnh bìa tự nén ≤1600px, nội dung), bản nháp / đăng, ghim, bật tắt nhanh, xoá
+- [x] **Nhóm chat**: danh sách nhóm, tạo nhóm tuỳ chọn, thành viên (thêm/xoá/quản trị/khoá chat), xem tin gần đây để kiểm duyệt + thu hồi, xoá nhóm
+- [x] **Biểu quyết**: tạo khảo sát (2–10 phương án, theo người / **theo hộ**, chọn một / nhiều, ẩn danh, hạn chót, đối tượng),
+      tỉ lệ tham gia, kết quả trực tiếp, xem ai chọn gì (khảo sát công khai), đóng sớm, xoá
 
 ### Cấu hình cloud đã xong
 - [x] Google provider bật; Email provider bật; **Confirm email tắt**
@@ -94,6 +105,7 @@
 ## 3. Chưa làm ⏳ (theo thứ tự nên làm)
 
 ### Việc nhỏ còn dở
+- [ ] **Đẩy migration 0005 lên cloud**: `npx supabase db push --remote` (cần cho Biểu quyết)
 - [ ] **Đưa Edge Function đặt lại mật khẩu lên cloud**: `npm run functions:deploy`
       (hiện cloud trả 404 → nút "Đặt lại mật khẩu" trong admin chưa chạy với bản cloud)
 - [ ] Xác nhận đã thêm **Redirect URLs** trong Supabase (Authentication → URL Configuration):
@@ -106,15 +118,13 @@
       (Expo Go trên Android không hỗ trợ push từ SDK 53): `expo-notifications` + lưu `push_tokens`
       + Edge Function gửi qua Expo Push khi có thông báo mới / SOS / phản ánh được xử lý.
       Hiện tại: thông báo & SOS cập nhật **realtime khi app đang mở** và tải lại khi mở app.
-- [ ] Xem lại giao diện tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
+- [ ] Xem lại giao diện tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức, Tin nhắn (đặc biệt: bàn phím khi chat trên Android) trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
 - [ ] (Nhỏ) Đổi/bỏ ảnh bìa tin tức chưa xoá ảnh cũ trong kho `news` — dọn định kỳ nếu kho đầy
 
 ### Giai đoạn 2
-- [ ] **Tab Tin nhắn**: danh sách nhóm, chat realtime, gửi ảnh, ghim, thu hồi, số tin chưa đọc
-- [ ] Sửa hồ sơ cá nhân (ảnh đại diện, số điện thoại) trên app
+- [ ] (Nhỏ) Thu hồi tin nhắn ảnh chưa xoá file ảnh trong kho `chat`
 
 ### Giai đoạn 3 — tiện ích
-- [ ] Khảo sát / biểu quyết
 - [ ] Lịch sự kiện (họp thôn, thu gom rác, tiêm chủng)
 - [ ] Quỹ thôn công khai thu chi
 - [ ] Đặt lịch nhà văn hoá
@@ -202,6 +212,11 @@ apps/mobile/src/
     report/[id].tsx       Chi tiết phản ánh + đánh giá
     news/index.tsx        Danh sách tin tức
     news/[id].tsx         Đọc tin
+    group/[id]/index.tsx  Màn hình chat nhóm
+    group/[id]/members.tsx Thành viên nhóm
+    polls/index.tsx       Danh sách khảo sát
+    polls/[id].tsx        Bỏ phiếu + kết quả
+    profile-edit.tsx      Sửa ảnh đại diện, số điện thoại
     announcement/[id].tsx Chi tiết thông báo
     sos.tsx               Khẩn cấp (giữ 3 giây để gửi)
   components/ui.tsx       Bộ component dùng chung (Txt, Button, Field, Card, GradientHeader…)
@@ -210,6 +225,9 @@ apps/mobile/src/
   lib/announcements.tsx   Danh sách thông báo + đã đọc + realtime (dùng chung toàn app)
   lib/reports.ts          Loại sự cố, trạng thái, nén + tải ảnh, link xem ảnh
   lib/news.ts             Tải tin tức đã đăng
+  lib/chat.tsx            Hộp thư chat (my_chat_groups) + tải tin nhắn + màu tên
+  lib/images.ts           Nén + tải ảnh dùng chung, link xem ảnh riêng tư
+  lib/polls.ts            Khảo sát: tải danh sách, kết quả, thời hạn
   lib/supabase.ts         Kết nối Supabase
 
 apps/admin/src/
@@ -220,7 +238,7 @@ apps/admin/src/
 packages/shared/src/      Kiểu dữ liệu CSDL + nhãn tiếng Việt (dùng chung app & admin)
 
 supabase/
-  migrations/             0001 bảng · 0002 hàm/RPC/trigger · 0003 RLS/storage/realtime
+  migrations/             0001 bảng · 0002 hàm/RPC/trigger · 0003 RLS/storage/realtime · 0004 hộp thư chat · 0005 biểu quyết
   functions/              Edge Functions (admin-reset-password)
   tests/                  Kiểm thử end-to-end
   scripts/seed-dev.mjs    Dữ liệu mẫu cho local

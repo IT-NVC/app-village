@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IconName } from '@/components/ui';
 import { Colors, Font, Shadow } from '@/constants/theme';
 import { useAnnouncements } from '@/lib/announcements';
+import { useChat } from '@/lib/chat';
 
 const tabs: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
   { name: 'index', title: 'Trang chủ', icon: 'home-outline', iconActive: 'home' },
@@ -18,6 +19,8 @@ const tabs: { name: string; title: string; icon: IconName; iconActive: IconName 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useAnnouncements();
+  const { totalUnread } = useChat();
+  const badges: Record<string, number> = { notifications: unreadCount, chat: totalUnread };
   return (
     <Tabs
       screenOptions={{
@@ -41,7 +44,7 @@ export default function TabsLayout() {
           name={t.name}
           options={{
             title: t.title,
-            tabBarBadge: t.name === 'notifications' && unreadCount > 0 ? unreadCount : undefined,
+            tabBarBadge: badges[t.name] ? (badges[t.name] > 99 ? '99+' : badges[t.name]) : undefined,
             tabBarBadgeStyle: { backgroundColor: Colors.danger, fontFamily: Font.bold, fontSize: 11 },
             tabBarIcon: ({ color, focused }) => (
               // Viên nền nhạt phía sau icon của tab đang chọn

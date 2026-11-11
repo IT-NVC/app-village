@@ -7,8 +7,10 @@ import AnnouncementsPage from '@/pages/AnnouncementsPage';
 import ApprovalsPage from '@/pages/ApprovalsPage';
 import AreasPage from '@/pages/AreasPage';
 import AuditPage from '@/pages/AuditPage';
+import ChatGroupsPage from '@/pages/ChatGroupsPage';
 import DashboardPage from '@/pages/DashboardPage';
 import NewsPage from '@/pages/NewsPage';
+import PollsPage from '@/pages/PollsPage';
 import PrintCodesPage from '@/pages/PrintCodesPage';
 import ReportsPage from '@/pages/ReportsPage';
 import ResidentsPage from '@/pages/ResidentsPage';
@@ -27,6 +29,8 @@ const router = createBrowserRouter([
           { path: 'duyet', element: <ApprovalsPage /> },
           { path: 'thong-bao', element: <AnnouncementsPage /> },
           { path: 'tin-tuc', element: <NewsPage /> },
+          { path: 'nhom-chat', element: <ChatGroupsPage /> },
+          { path: 'bieu-quyet', element: <PollsPage /> },
           { path: 'sos', element: <SosPage /> },
           { path: 'phan-anh', element: <ReportsPage /> },
           { path: 'nhan-khau', element: <ResidentsPage /> },

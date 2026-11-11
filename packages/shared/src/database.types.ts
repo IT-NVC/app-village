@@ -369,6 +369,128 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"poll_options": {
+                  Row: {
+                    "id": string,"label": string,"poll_id": string,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"label": string,"poll_id": string,"sort_order"?: number
+                  }
+                  Update: {
+                    "id"?: string,"label"?: string,"poll_id"?: string,"sort_order"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "poll_options_poll_id_fkey"
+      columns: ["poll_id"]
+isOneToOne: false
+      referencedRelation: "polls"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"poll_targets": {
+                  Row: {
+                    "area_id": string | null,"id": string,"org_id": string | null,"poll_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "area_id"?: string | null,"id"?: string,"org_id"?: string | null,"poll_id": string
+                  }
+                  Update: {
+                    "area_id"?: string | null,"id"?: string,"org_id"?: string | null,"poll_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "poll_targets_area_id_fkey"
+      columns: ["area_id"]
+isOneToOne: false
+      referencedRelation: "areas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_targets_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_targets_poll_id_fkey"
+      columns: ["poll_id"]
+isOneToOne: false
+      referencedRelation: "polls"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"poll_votes": {
+                  Row: {
+                    "created_at": string,"household_id": string | null,"option_id": string,"poll_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"household_id"?: string | null,"option_id": string,"poll_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"household_id"?: string | null,"option_id"?: string,"poll_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "poll_votes_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_votes_option_id_fkey"
+      columns: ["option_id"]
+isOneToOne: false
+      referencedRelation: "poll_options"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_votes_poll_id_fkey"
+      columns: ["poll_id"]
+isOneToOne: false
+      referencedRelation: "polls"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_votes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "poll_votes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"polls": {
+                  Row: {
+                    "allow_multiple": boolean,"closed_at": string | null,"closes_at": string | null,"created_at": string,"created_by": string | null,"description": string | null,"id": string,"is_anonymous": boolean,"target_all": boolean,"title": string,"vote_scope": Database["public"]['Enums']["vote_scope"],"poll_is_open": boolean | null
+                  }
+                  ComputedFields: "poll_is_open"
+                  Insert: {
+                    "allow_multiple"?: boolean,"closed_at"?: string | null,"closes_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"is_anonymous"?: boolean,"target_all"?: boolean,"title": string,"vote_scope"?: Database["public"]['Enums']["vote_scope"]
+                  }
+                  Update: {
+                    "allow_multiple"?: boolean,"closed_at"?: string | null,"closes_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"is_anonymous"?: boolean,"target_all"?: boolean,"title"?: string,"vote_scope"?: Database["public"]['Enums']["vote_scope"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "polls_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "polls_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "activation_attempts": number,"approved_at": string | null,"approved_by": string | null,"avatar_url": string | null,"created_at": string,"id": string,"leadership_role": Database["public"]['Enums']["leadership_role"] | null,"reject_reason": string | null,"resident_id": string | null,"status": Database["public"]['Enums']["account_status"],"updated_at": string,"username": string | null
@@ -579,8 +701,20 @@ isOneToOne: false
 "can_view_announcement":
 { Args: { "p_announcement": string }; Returns: boolean
                            },
+"can_view_poll":
+{ Args: { "p_poll": string }; Returns: boolean
+                           },
+"cast_vote":
+{ Args: { "p_option_ids": (string)[],"p_poll_id": string }; Returns: undefined
+                           },
+"close_poll":
+{ Args: { "p_poll_id": string }; Returns: undefined
+                           },
 "create_chat_group":
 { Args: { "p_area_id"?: string,"p_member_ids"?: (string)[],"p_name": string,"p_org_id"?: string,"p_type": Database["public"]['Enums']["chat_group_type"] }; Returns: string
+                           },
+"create_poll":
+{ Args: { "p_allow_multiple"?: boolean,"p_area_ids"?: (string)[],"p_closes_at"?: string,"p_description"?: string,"p_is_anonymous"?: boolean,"p_options": (string)[],"p_org_ids"?: (string)[],"p_target_all"?: boolean,"p_title": string,"p_vote_scope"?: Database["public"]['Enums']["vote_scope"] }; Returns: string
                            },
 "delete_message":
 { Args: { "p_message_id": string }; Returns: undefined
@@ -612,11 +746,19 @@ isOneToOne: false
 "is_org_leader":
 { Args: { "p_org": string }; Returns: boolean
                            },
+"is_poll_recipient":
+{ Args: { "p_poll": string,"p_user": string }; Returns: boolean
+                           },
 "mark_group_read":
 { Args: { "p_group_id": string }; Returns: undefined
                            },
 "my_area_id":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"my_chat_groups":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string,"id": string,"is_muted": boolean,"last_content": string,"last_deleted": boolean,"last_has_image": boolean,"last_message_at": string,"last_sender_id": string,"last_sender_name": string,"member_count": number,"my_role": Database["public"]['Enums']["chat_member_role"],"name": string,"type": Database["public"]['Enums']["chat_group_type"],"unread": number
+            }[]
                            },
 "my_rank":
 { Args: Record<PropertyKey, never>; Returns: number
@@ -626,6 +768,22 @@ isOneToOne: false
                            },
 "pin_message":
 { Args: { "p_message_id": string,"p_pinned": boolean }; Returns: undefined
+                           },
+"poll_eligible_count":
+{ Args: { "p_poll_id": string }; Returns: number
+                           },
+"poll_is_open":
+{ Args: { "p": Omit<Database["public"]['Tables']["polls"]['Row'], Database["public"]['Tables']["polls"]['ComputedFields']> }; Returns: boolean
+                           },
+"poll_results":
+{ Args: { "p_poll_id": string }; Returns: {
+              "label": string,"my_vote": boolean,"option_id": string,"sort_order": number,"voters": number,"votes": number
+            }[]
+                           },
+"poll_voters":
+{ Args: { "p_poll_id": string }; Returns: {
+              "area_name": string,"full_name": string,"option_label": string,"user_id": string,"voted_at": string
+            }[]
                            },
 "rate_report":
 { Args: { "p_comment"?: string,"p_rating": number,"p_report_id": string }; Returns: undefined
@@ -674,7 +832,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly"
+            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly","vote_scope": "person"|"household"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -794,7 +952,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"]
+            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"],"vote_scope": ["person", "household"]
           }
         }
 } as const

@@ -1,9 +1,8 @@
 import { REPORT_CATEGORY_LABEL, REPORT_STATUS_LABEL, type ReportCategory, type ReportStatus } from '@thon/shared';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 import type { IconName } from '@/components/ui';
 import { Colors } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { compressAndUpload, randomName, signedUrlsFor } from '@/lib/images';
 
 export const BUCKET = 'report-images';
 export const MAX_IMAGES = 3;
@@ -43,27 +42,10 @@ export const STATUS_STYLE: Record<ReportStatus, { label: string; icon: IconName;
   tu_choi: { label: REPORT_STATUS_LABEL.tu_choi, icon: 'close-circle', color: Colors.danger, bg: Colors.dangerSoft },
 };
 
-/** Thu nhỏ ảnh (cạnh dài tối đa 1280px, JPEG 70%) rồi tải lên kho; trả về đường dẫn trong bucket */
-export async function uploadReportImage(userId: string, uri: string, width: number, height: number): Promise<string> {
-  const ctx = ImageManipulator.manipulate(uri);
-  const longest = Math.max(width, height);
-  if (longest > 1280) {
-    ctx.resize(width >= height ? { width: 1280 } : { height: 1280 });
-  }
-  const rendered = await ctx.renderAsync();
-  const saved = await rendered.saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
-  const body = await (await fetch(saved.uri)).arrayBuffer();
-  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: 'image/jpeg' });
-  if (error) throw new Error(`Tải ảnh lên không thành công: ${error.message}`);
-  return path;
+/** Tải ảnh phản ánh vào thư mục của người gửi */
+export function uploadReportImage(userId: string, uri: string, width: number, height: number) {
+  return compressAndUpload(BUCKET, `${userId}/${randomName()}`, uri, width, height);
 }
 
-/** Link xem ảnh (bucket riêng tư -> link có hạn 1 giờ) */
-export async function signedUrls(paths: string[]): Promise<Record<string, string>> {
-  if (paths.length === 0) return {};
-  const { data } = await supabase.storage.from(BUCKET).createSignedUrls(paths, 3600);
-  const out: Record<string, string> = {};
-  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  return out;
-}
+/** Link xem ảnh phản ánh (kho riêng tư) */
+export const signedUrls = (paths: string[]) => signedUrlsFor(BUCKET, paths);

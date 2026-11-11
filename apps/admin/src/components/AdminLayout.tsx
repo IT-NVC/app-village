@@ -1,5 +1,7 @@
 import {
   ApartmentOutlined,
+  CommentOutlined,
+  BarChartOutlined,
   AuditOutlined,
   AlertOutlined,
   DashboardOutlined,
@@ -63,6 +65,8 @@ export function AdminLayout() {
       : []),
     { key: '/thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
     { key: '/tin-tuc', icon: <ReadOutlined />, label: 'Tin tức' },
+    { key: '/nhom-chat', icon: <CommentOutlined />, label: 'Nhóm chat' },
+    { key: '/bieu-quyet', icon: <BarChartOutlined />, label: 'Biểu quyết' },
     { key: '/nhan-khau', icon: <TeamOutlined />, label: 'Nhân khẩu' },
     { key: '/tai-khoan', icon: <UserSwitchOutlined />, label: 'Tài khoản & phân quyền' },
     { key: '/khu-vuc', icon: <ApartmentOutlined />, label: 'Khu vực & ban ngành' },

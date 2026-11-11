@@ -40,7 +40,8 @@ const TILES: { icon: IconName; label: string; desc: string; to: Href; color: str
   { icon: 'notifications', label: 'Thông báo', desc: 'Tin từ thôn', to: '/notifications', color: Colors.warning, bg: Colors.warningSoft },
   { icon: 'construct', label: 'Phản ánh', desc: 'Báo sự cố', to: '/reports', color: Colors.purple, bg: Colors.purpleSoft },
   { icon: 'chatbubbles', label: 'Tin nhắn', desc: 'Nhóm của bạn', to: '/chat', color: Colors.info, bg: Colors.infoSoft },
-  { icon: 'person-circle', label: 'Cá nhân', desc: 'Thông tin của bạn', to: '/profile', color: Colors.primaryText, bg: Colors.primarySoft },
+  { icon: 'hand-left', label: 'Biểu quyết', desc: 'Góp ý việc chung', to: '/polls', color: '#C2185B', bg: '#FCE4EC' },
+  { icon: 'newspaper', label: 'Tin tức', desc: 'Hoạt động của thôn', to: '/news', color: Colors.primaryText, bg: Colors.primarySoft },
 ];
 
 const WEEKDAYS = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
@@ -100,7 +101,7 @@ export default function HomeScreen() {
       header={
         <GradientHeader extraBottom={52}>
           <View style={styles.headerTop}>
-            <Avatar name={me?.full_name} light size={54} />
+            <Avatar name={me?.full_name} url={me?.avatar_url} light size={54} />
             <View style={{ flex: 1 }}>
               <Txt variant="small" color="rgba(255,255,255,0.88)">
                 {greeting()},

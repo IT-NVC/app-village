@@ -252,6 +252,175 @@ const n3 = await newsQuery(danA);
 check('Gỡ đăng → người dân không thấy nữa', !unpub.error && !n3.data?.some((n) => n.id === draft.data.id));
 await bithu.from('news').delete().eq('id', draft.data.id);
 
+console.log('\nTin nhắn nhóm');
+const grp = await bithu.rpc('create_chat_group', { p_name: `Ban điều hành ${RUN}`, p_type: 'custom', p_member_ids: [danA.id, danB.id] });
+check('Cán bộ tạo nhóm tuỳ chọn', !grp.error, grp.error?.message);
+const G = grp.data;
+
+const inbox = async (c) => (await c.rpc('my_chat_groups')).data?.find((g) => g.id === G);
+let ia = await inbox(danA);
+check('Hộp thư: thành viên thấy nhóm, chưa có tin', ia && ia.member_count === 3 && ia.unread === 0 && ia.last_message_at === null, JSON.stringify(ia));
+check('Hộp thư: người ngoài nhóm không thấy', !(await inbox(photon)));
+
+let gotMsg = null;
+const chChat = danA.channel(`t-chat-${RUN}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `group_id=eq.${G}` }, (p) => { gotMsg = p.new; });
+await new Promise((r) => chChat.subscribe((s) => s === 'SUBSCRIBED' && r()));
+await sleep(1500); // chờ Realtime đăng ký xong
+const m1 = await bithu.from('messages').insert({ group_id: G, sender_id: li.data.user.id, content: 'Chào cả nhóm' })
+  .select('id, group_id, sender_id, content, image_path, is_pinned, deleted_at, created_at').single();
+check('Quản trị nhóm gửi tin', !m1.error, m1.error?.message);
+check('Realtime: thành viên nhận tin ngay', await waitFor(() => gotMsg?.id === m1.data?.id));
+danA.removeChannel(chChat);
+
+ia = await inbox(danA);
+check('Hộp thư: 1 tin chưa đọc + tên người gửi + nội dung', ia.unread === 1 && ia.last_content === 'Chào cả nhóm' && !!ia.last_sender_name, JSON.stringify(ia));
+await danA.rpc('mark_group_read', { p_group_id: G });
+ia = await inbox(danA);
+check('Đánh dấu đã đọc → hết chưa đọc', ia.unread === 0);
+
+const list = await danA.from('messages').select('id, group_id, sender_id, content, image_path, is_pinned, deleted_at, created_at')
+  .eq('group_id', G).order('created_at', { ascending: false }).limit(40);
+check('Thành viên tải được tin nhắn', list.data?.length === 1, list.error?.message);
+const spy = await photon.from('messages').select('id').eq('group_id', G);
+check('Người ngoài nhóm KHÔNG đọc được tin', spy.data?.length === 0);
+const spySend = await photon.from('messages').insert({ group_id: G, sender_id: photon.id, content: 'x' });
+check('Người ngoài nhóm KHÔNG gửi được tin', !!spySend.error);
+
+const dir = await danA.from('member_directory').select('id, full_name').in('id', [li.data.user.id, danB.id]);
+check('App: lấy được tên thành viên để hiển thị', dir.data?.length === 2, dir.error?.message);
+
+const chatImg = `${G}/${danA.id}-${RUN}.jpg`;
+const cu = await danA.storage.from('chat').upload(chatImg, jpeg, { contentType: 'image/jpeg' });
+check('Thành viên gửi ảnh vào kho chat của nhóm', !cu.error, cu.error?.message);
+const cuSpy = await photon.storage.from('chat').upload(`${G}/spy-${RUN}.jpg`, jpeg, { contentType: 'image/jpeg' });
+check('Người ngoài nhóm KHÔNG tải ảnh vào nhóm được', !!cuSpy.error);
+const m2 = await danA.from('messages').insert({ group_id: G, sender_id: danA.id, image_path: chatImg }).select('id').single();
+check('Gửi tin nhắn ảnh', !m2.error, m2.error?.message);
+const urlB = await danB.storage.from('chat').createSignedUrls([chatImg], 3600);
+check('Thành viên khác xem được ảnh', !!urlB.data?.[0]?.signedUrl);
+const urlSpy = await photon.storage.from('chat').createSignedUrls([chatImg], 3600);
+check('Người ngoài nhóm KHÔNG xem được ảnh', !urlSpy.data?.[0]?.signedUrl);
+
+const pinBad = await danA.rpc('pin_message', { p_message_id: m1.data.id, p_pinned: true });
+check('Thành viên thường KHÔNG ghim được', !!pinBad.error);
+const pinOk = await bithu.rpc('pin_message', { p_message_id: m1.data.id, p_pinned: true });
+check('Quản trị nhóm ghim tin', !pinOk.error, pinOk.error?.message);
+const delBad = await danB.rpc('delete_message', { p_message_id: m2.data.id });
+check('KHÔNG thu hồi được tin của người khác', !!delBad.error);
+const delOk = await danA.rpc('delete_message', { p_message_id: m2.data.id });
+const delRow = await danB.from('messages').select('deleted_at, content, image_path').eq('id', m2.data.id).single();
+check('Người gửi thu hồi tin của mình (xoá nội dung)', !delOk.error && delRow.data?.deleted_at && delRow.data.image_path === null, delOk.error?.message);
+ia = await inbox(danB);
+check('Hộp thư hiện "đã thu hồi" cho tin cuối', ia.last_deleted === true);
+
+await bithu.rpc('update_group_member', { p_group_id: G, p_user_id: danB.id, p_is_muted: true });
+const mutedSend = await danB.from('messages').insert({ group_id: G, sender_id: danB.id, content: 'x' });
+check('Thành viên bị khoá chat KHÔNG gửi được', !!mutedSend.error);
+check('Hộp thư báo "đang bị khoá chat"', (await inbox(danB)).is_muted === true);
+
+const adminGroups = await bithu.from('chat_groups').select('id, name, type, last_message_at, chat_group_members(count)').eq('id', G);
+check('Admin: danh sách nhóm kèm số thành viên', adminGroups.data?.[0]?.chat_group_members?.[0]?.count === 3, adminGroups.error?.message ?? JSON.stringify(adminGroups.data));
+const adminMembers = await bithu.from('chat_group_members').select('user_id, role, is_muted, profiles(username, residents(full_name, areas(name)))').eq('group_id', G);
+check('Admin: thành viên kèm tên + khu', adminMembers.data?.some((m) => m.profiles?.residents?.full_name), adminMembers.error?.message);
+const adminMsgs = await bithu.from('messages').select('id, sender_id, content, image_path, deleted_at, created_at, profiles(username, residents(full_name))').eq('group_id', G);
+check('Admin: xem tin nhắn để kiểm duyệt', adminMsgs.data?.length === 2, adminMsgs.error?.message);
+
+const leave = await danA.rpc('remove_group_member', { p_group_id: G, p_user_id: danA.id });
+check('Thành viên tự rời nhóm', !leave.error && !(await inbox(danA)), leave.error?.message);
+const kick = await danB.rpc('remove_group_member', { p_group_id: G, p_user_id: li.data.user.id });
+check('Thành viên thường KHÔNG xoá được người khác', !!kick.error);
+await bithu.from('chat_groups').delete().eq('id', G);
+
+console.log('\nKhảo sát / Biểu quyết');
+// Hộ gia đình ở Khu A gồm danA và danA2
+const { data: hh } = await bithu.from('households').insert({ code: `H${RUN}`, head_name: 'Chủ hộ', area_id: khuA.id }).select('id').single();
+const danA2 = await resident('dana2', khuA.id);
+const resIds = (await bithu.from('profiles').select('resident_id').in('id', [danA.id, danA2.id])).data.map((p) => p.resident_id);
+await bithu.from('residents').update({ household_id: hh.id }).in('id', resIds);
+
+const badPoll = await danA.rpc('create_poll', { p_title: 'x', p_options: ['a', 'b'] });
+check('Người dân KHÔNG tạo được khảo sát', !!badPoll.error);
+const tooFew = await bithu.rpc('create_poll', { p_title: 'x', p_options: ['a', '  '] });
+check('Cần ít nhất 2 phương án', tooFew.error?.message.includes('2 phương án'), tooFew.error?.message);
+
+const poll = await bithu.rpc('create_poll', {
+  p_title: `Góp tiền làm đường ngõ 3? ${RUN}`, p_options: ['Đồng ý', 'Không đồng ý', 'Ý kiến khác'],
+  p_vote_scope: 'household', p_target_all: false, p_area_ids: [khuA.id],
+  p_closes_at: new Date(Date.now() + 7 * 86400e3).toISOString(),
+});
+check('Cán bộ tạo khảo sát mỗi hộ một phiếu cho Khu A', !poll.error, poll.error?.message);
+const P = poll.data;
+const pOpts = (await danA.from('poll_options').select('id, label').eq('poll_id', P).order('sort_order')).data;
+check('Người Khu A thấy khảo sát + 3 phương án', pOpts?.length === 3 && pOpts[0].label === 'Đồng ý');
+const seenB = await danB.from('polls').select('id').eq('id', P);
+check('Người Khu B KHÔNG thấy khảo sát', seenB.data?.length === 0);
+const resB = await danB.rpc('poll_results', { p_poll_id: P });
+check('Người Khu B KHÔNG xem được kết quả', !!resB.error);
+const voteB = await danB.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[0].id] });
+check('Người ngoài đối tượng KHÔNG bỏ phiếu được', !!voteB.error);
+
+const v1 = await danA.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[1].id] });
+check('Người dân bỏ phiếu', !v1.error, v1.error?.message);
+const v1b = await danA.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[0].id] });
+check('Đổi phiếu khi khảo sát còn mở', !v1b.error, v1b.error?.message);
+const multi = await danA.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[0].id, pOpts[1].id] });
+check('Khảo sát một lựa chọn KHÔNG cho chọn nhiều', !!multi.error);
+const sameHH = await danA2.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[1].id] });
+check('Người cùng hộ KHÔNG bỏ thêm phiếu được', sameHH.error?.message.includes('Hộ của bạn'), sameHH.error?.message);
+const noHH = await resident('nohh', khuA.id);
+const noHHVote = await noHH.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[0].id] });
+check('Chưa gắn hộ → được báo rõ lý do', noHHVote.error?.message.includes('chưa gắn với hộ'), noHHVote.error?.message);
+
+const results = (await danA.rpc('poll_results', { p_poll_id: P })).data;
+check('Kết quả: "Đồng ý" 1 phiếu, đánh dấu phiếu của tôi, 1 hộ tham gia',
+  results?.[0]?.votes === 1 && results[0].my_vote && results[1].votes === 0 && results[0].voters === 1, JSON.stringify(results));
+const elig = await bithu.rpc('poll_eligible_count', { p_poll_id: P });
+check('Số hộ thuộc đối tượng (để tính tỉ lệ tham gia)', elig.data >= 1, JSON.stringify(elig));
+const voters = await bithu.rpc('poll_voters', { p_poll_id: P });
+check('Cán bộ xem ai chọn gì (khảo sát công khai)', voters.data?.[0]?.option_label === 'Đồng ý' && !!voters.data[0].full_name, voters.error?.message);
+const votersRes = await danA.rpc('poll_voters', { p_poll_id: P });
+check('Người dân KHÔNG xem danh sách người bỏ phiếu', !!votersRes.error);
+const peekVotes = await danA2.from('poll_votes').select('user_id').eq('poll_id', P);
+check('Người dân KHÔNG xem phiếu của người khác', peekVotes.data?.length === 0);
+const directVote = await danA2.from('poll_votes').insert({ poll_id: P, option_id: pOpts[1].id, user_id: danA2.id });
+check('KHÔNG ghi phiếu trực tiếp vào bảng (phải qua cast_vote)', !!directVote.error);
+
+const cl = await bithu.rpc('close_poll', { p_poll_id: P });
+const afterClose = await danA.rpc('cast_vote', { p_poll_id: P, p_option_ids: [pOpts[1].id] });
+check('Đóng khảo sát → không bỏ/đổi phiếu được nữa', !cl.error && afterClose.error?.message.includes('đã đóng'), afterClose.error?.message);
+
+const anon = await bithu.rpc('create_poll', {
+  p_title: `Chọn ngày hội làng ${RUN}`, p_options: ['Thứ Bảy', 'Chủ nhật', 'Ngày lễ'], p_allow_multiple: true, p_is_anonymous: true,
+});
+const aOpts = (await danB.from('poll_options').select('id').eq('poll_id', anon.data).order('sort_order')).data;
+const aVote = await danB.rpc('cast_vote', { p_poll_id: anon.data, p_option_ids: [aOpts[0].id, aOpts[1].id] });
+check('Khảo sát nhiều lựa chọn, toàn thôn: chọn 2 phương án', !aVote.error, aVote.error?.message);
+const aRes = (await danB.rpc('poll_results', { p_poll_id: anon.data })).data;
+check('Kết quả nhiều lựa chọn: 1 người tham gia, 2 phiếu', aRes?.[0]?.voters === 1 && aRes[0].votes === 1 && aRes[1].votes === 1);
+const aVoters = await bithu.rpc('poll_voters', { p_poll_id: anon.data });
+check('Khảo sát ẩn danh: cán bộ cũng KHÔNG xem được ai chọn gì', aVoters.error?.message.includes('ẩn danh'), aVoters.error?.message);
+const appList = await danA.from('polls').select('id, title, description, allow_multiple, is_anonymous, vote_scope, closes_at, closed_at, created_at').order('created_at', { ascending: false }).limit(100);
+const myVotes = await danA.from('poll_votes').select('poll_id').eq('user_id', danA.id);
+check('App: danh sách khảo sát + đánh dấu đã bỏ phiếu', appList.data?.some((p) => p.id === P) && myVotes.data?.some((v) => v.poll_id === P), appList.error?.message ?? myVotes.error?.message);
+await bithu.from('polls').delete().in('id', [P, anon.data]);
+
+console.log('\nSửa hồ sơ');
+const avPath = `${danA.id}/${RUN}.jpg`;
+const av = await danA.storage.from('avatars').upload(avPath, jpeg, { contentType: 'image/jpeg' });
+check('Tải ảnh đại diện vào thư mục của mình', !av.error, av.error?.message);
+const avBad = await danA.storage.from('avatars').upload(`${danB.id}/${RUN}.jpg`, jpeg, { contentType: 'image/jpeg' });
+check('KHÔNG tải ảnh đại diện vào thư mục người khác', !!avBad.error);
+const avUrl = danA.storage.from('avatars').getPublicUrl(avPath).data.publicUrl;
+check('Ảnh đại diện xem được qua link công khai', (await fetch(avUrl)).status === 200);
+const upd = await danA.rpc('update_my_profile', { p_avatar_url: avUrl, p_phone: '0911222333' });
+const meA = (await danA.rpc('get_me')).data;
+check('Cập nhật ảnh + số điện thoại của mình', !upd.error && meA.avatar_url === avUrl && meA.phone === '0911222333', upd.error?.message);
+const keep = await danA.rpc('update_my_profile', {});
+const meA2 = (await danA.rpc('get_me')).data;
+check('Gọi không truyền gì thì giữ nguyên thông tin', !keep.error && meA2.phone === '0911222333' && meA2.avatar_url === avUrl);
+const dirAv = await danB.from('member_directory').select('avatar_url').eq('id', danA.id).single();
+check('Người khác thấy ảnh đại diện (trong chat / danh bạ)', dirAv.data?.avatar_url === avUrl);
+
 console.log(`\nKết quả: ${pass} đạt, ${fail} lỗi\n`);
 await Promise.all([bithu, danA, danB, photon].map((c) => c.removeAllChannels()));
 process.exit(fail ? 1 : 0);

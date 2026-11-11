@@ -1,5 +1,6 @@
 import { LEADERSHIP_ROLE_LABEL, ORG_ROLE_LABEL } from '@thon/shared';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Avatar, Button, Card, Chip, GradientHeader, ListRow, ScrollPage, SectionTitle, Txt } from '@/components/ui';
@@ -17,7 +18,7 @@ export default function ProfileScreen() {
       header={
         <GradientHeader extraBottom={44} style={{ alignItems: 'center' }}>
           <View style={styles.avatarWrap}>
-            <Avatar name={me?.full_name} size={96} light />
+            <Avatar name={me?.full_name} url={me?.avatar_url} size={96} light />
           </View>
           <Txt variant="title" color={Colors.white} center>
             {me?.full_name ?? 'Chưa có tên'}
@@ -57,6 +58,8 @@ export default function ProfileScreen() {
           </Card>
         </>
       ) : null}
+
+      <Button title="Sửa thông tin" variant="secondary" icon="create-outline" onPress={() => router.push('/profile-edit')} />
 
       <Button
         title="Đăng xuất"
