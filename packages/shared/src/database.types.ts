@@ -271,6 +271,70 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"fund_transactions": {
+                  Row: {
+                    "amount": number,"created_at": string,"created_by": string | null,"description": string,"fund_id": string,"household_id": string | null,"id": string,"kind": Database["public"]['Enums']["fund_tx_kind"],"occurred_on": string,"payer_name": string | null,"receipt_path": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"created_at"?: string,"created_by"?: string | null,"description": string,"fund_id": string,"household_id"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["fund_tx_kind"],"occurred_on"?: string,"payer_name"?: string | null,"receipt_path"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"created_at"?: string,"created_by"?: string | null,"description"?: string,"fund_id"?: string,"household_id"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["fund_tx_kind"],"occurred_on"?: string,"payer_name"?: string | null,"receipt_path"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fund_transactions_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fund_transactions_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fund_transactions_fund_id_fkey"
+      columns: ["fund_id"]
+isOneToOne: false
+      referencedRelation: "funds"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fund_transactions_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"funds": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"description": string | null,"id": string,"is_active": boolean,"name": string,"target_amount": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"target_amount"?: number | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"target_amount"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "funds_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "member_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "funds_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"households": {
                   Row: {
                     "address": string | null,"area_id": string | null,"code": string | null,"created_at": string,"head_name": string,"id": string
@@ -826,6 +890,26 @@ isOneToOne: false
 "delete_message":
 { Args: { "p_message_id": string }; Returns: undefined
                            },
+"fund_household_contributions":
+{ Args: { "p_fund_id": string }; Returns: {
+              "area_name": string,"code": string,"head_name": string,"household_id": string,"is_mine": boolean,"times": number,"total": number
+            }[]
+                           },
+"fund_missing_households":
+{ Args: { "p_area_id"?: string,"p_fund_id": string }; Returns: {
+              "area_name": string,"code": string,"head_name": string,"household_id": string,"phone": string
+            }[]
+                           },
+"fund_summaries":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "balance": number,"created_at": string,"description": string,"households": number,"id": string,"is_active": boolean,"last_tx_on": string,"name": string,"target_amount": number,"total_chi": number,"total_thu": number
+            }[]
+                           },
+"fund_transactions_view":
+{ Args: { "p_fund_id": string }; Returns: {
+              "amount": number,"created_at": string,"description": string,"household_id": string,"household_label": string,"id": string,"kind": Database["public"]['Enums']["fund_tx_kind"],"occurred_on": string,"payer_name": string,"receipt_path": string
+            }[]
+                           },
 "gen_activation_code":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -834,6 +918,11 @@ isOneToOne: false
                            },
 "handle_sos":
 { Args: { "p_sos_id": string,"p_status": Database["public"]['Enums']["sos_status"] }; Returns: undefined
+                           },
+"household_options":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "area_name": string,"code": string,"head_name": string,"id": string
+            }[]
                            },
 "is_active":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -954,7 +1043,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","booking_status": "cho_duyet"|"da_duyet"|"tu_choi"|"da_huy","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","event_category": "hop"|"van_hoa"|"ve_sinh"|"y_te"|"the_thao"|"khac","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly","vote_scope": "person"|"household"
+            "account_status": "unverified"|"pending"|"active"|"rejected"|"locked","booking_status": "cho_duyet"|"da_duyet"|"tu_choi"|"da_huy","chat_group_type": "area"|"org"|"custom","chat_member_role": "admin"|"member","event_category": "hop"|"van_hoa"|"ve_sinh"|"y_te"|"the_thao"|"khac","fund_tx_kind": "thu"|"chi","gender": "nam"|"nu"|"khac","leadership_role": "bi_thu"|"truong_thon"|"pho_thon","org_role": "truong_ban"|"thanh_vien","priority_level": "khan"|"quan_trong"|"thuong","report_category": "dien"|"duong"|"nuoc"|"ve_sinh"|"an_ninh"|"khac","report_status": "moi"|"dang_xu_ly"|"hoan_thanh"|"tu_choi","sos_status": "dang_cho"|"da_tiep_nhan"|"da_xu_ly","vote_scope": "person"|"household"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1074,7 +1163,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"booking_status": ["cho_duyet", "da_duyet", "tu_choi", "da_huy"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"event_category": ["hop", "van_hoa", "ve_sinh", "y_te", "the_thao", "khac"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"],"vote_scope": ["person", "household"]
+            "account_status": ["unverified", "pending", "active", "rejected", "locked"],"booking_status": ["cho_duyet", "da_duyet", "tu_choi", "da_huy"],"chat_group_type": ["area", "org", "custom"],"chat_member_role": ["admin", "member"],"event_category": ["hop", "van_hoa", "ve_sinh", "y_te", "the_thao", "khac"],"fund_tx_kind": ["thu", "chi"],"gender": ["nam", "nu", "khac"],"leadership_role": ["bi_thu", "truong_thon", "pho_thon"],"org_role": ["truong_ban", "thanh_vien"],"priority_level": ["khan", "quan_trong", "thuong"],"report_category": ["dien", "duong", "nuoc", "ve_sinh", "an_ninh", "khac"],"report_status": ["moi", "dang_xu_ly", "hoan_thanh", "tu_choi"],"sos_status": ["dang_cho", "da_tiep_nhan", "da_xu_ly"],"vote_scope": ["person", "household"]
           }
         }
 } as const

@@ -14,16 +14,20 @@
     "db:reset": "supabase db reset",
     "db:seed": "node supabase/scripts/seed-dev.mjs",
     "db:test": "node supabase/tests/e2e.mjs",
-    "db:types": "supabase gen types typescript > packages/shared/src/database.types.ts",
+    "db:types": "supabase gen types typescript --remote > packages/shared/src/database.types.ts",
     "db:test:admin": "node supabase/tests/admin-queries.mjs",
     "functions:serve": "supabase functions serve",
     "functions:deploy": "supabase functions deploy --remote",
     "db:test:features": "node supabase/tests/features.mjs",
     "functions:serve:test": "supabase functions serve --env-file supabase/tests/push-dry-run.env",
-    "db:test:push": "node supabase/tests/push.mjs"
+    "db:test:push": "node supabase/tests/push.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "db:test:manage": "node supabase/tests/manage.mjs",
+    "db:types:local": "supabase gen types typescript --local > packages/shared/src/database.types.ts"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.119.0",
+    "sharp": "^0.35.5",
     "supabase": "^3.1.0",
     "typescript": "~6.0.3"
   }

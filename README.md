@@ -12,7 +12,8 @@
 
 ## Chạy trên máy (local)
 
-Yêu cầu: Node.js, Docker Desktop đang chạy.
+App và trang admin chạy với **Supabase cloud** — không cần Docker.
+Phần dưới chỉ cần khi muốn **chạy kiểm thử / thử migration** trên một Supabase chạy trong máy (cần Docker Desktop):
 
 ```bash
 npm install

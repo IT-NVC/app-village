@@ -19,6 +19,11 @@ const ENTITY: Record<string, string> = {
   app_settings: 'Cài đặt',
   residents: 'Nhân khẩu',
   announcements: 'Thông báo',
+  funds: 'Quỹ',
+  fund_transactions: 'Thu chi quỹ',
+  events: 'Sự kiện',
+  venue_bookings: 'Đặt lịch',
+  polls: 'Khảo sát',
 };
 const ACTION: Record<string, { label: string; color: string }> = {
   insert: { label: 'Thêm', color: 'green' },

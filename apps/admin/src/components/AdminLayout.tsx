@@ -3,6 +3,7 @@ import {
   CommentOutlined,
   BarChartOutlined,
   CalendarOutlined,
+  WalletOutlined,
   AuditOutlined,
   AlertOutlined,
   DashboardOutlined,
@@ -19,6 +20,7 @@ import { LEADERSHIP_ROLE_LABEL } from '@thon/shared';
 import { Badge, Button, Flex, Layout, Menu, Typography } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 
+import logo from '@/assets-logo.svg';
 import { useAuth } from '@/lib/auth';
 import { useNewReportsCount, usePendingCount, useSosPendingCount } from '@/lib/data';
 import { SosAlerter } from '@/components/SosAlerter';
@@ -69,6 +71,7 @@ export function AdminLayout() {
     { key: '/nhom-chat', icon: <CommentOutlined />, label: 'Nhóm chat' },
     { key: '/bieu-quyet', icon: <BarChartOutlined />, label: 'Biểu quyết' },
     { key: '/lich', icon: <CalendarOutlined />, label: 'Lịch & đặt chỗ' },
+    { key: '/quy', icon: <WalletOutlined />, label: 'Quỹ thôn' },
     { key: '/nhan-khau', icon: <TeamOutlined />, label: 'Nhân khẩu' },
     { key: '/tai-khoan', icon: <UserSwitchOutlined />, label: 'Tài khoản & phân quyền' },
     { key: '/khu-vuc', icon: <ApartmentOutlined />, label: 'Khu vực & ban ngành' },
@@ -81,9 +84,12 @@ export function AdminLayout() {
       <SosAlerter />
       <Layout.Sider width={250} theme="light" breakpoint="lg" collapsedWidth={0} style={{ borderRight: '1px solid #eee' }}>
         <div style={{ padding: '20px 20px 12px' }}>
-          <Typography.Title level={4} style={{ margin: 0, color: '#1F7A45' }}>
-            Thôn Thống Nhất
-          </Typography.Title>
+          <Flex align="center" gap={10}>
+            <img src={logo} alt="" width={36} height={36} />
+            <Typography.Title level={4} style={{ margin: 0, color: '#1F7A45' }}>
+              Thôn Thống Nhất
+            </Typography.Title>
+          </Flex>
           <Typography.Text type="secondary">Xã Sóc Sơn</Typography.Text>
         </div>
         <Menu mode="inline" selectedKeys={[pathname]} items={items} onClick={(e) => navigate(e.key)} style={{ border: 0 }} />

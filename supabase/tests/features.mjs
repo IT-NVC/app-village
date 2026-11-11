@@ -479,6 +479,49 @@ const mineBk = await danB.from('venue_bookings').select('id, purpose, starts_at,
 check('App: "Lịch đặt của tôi" gồm cả chờ duyệt / bị từ chối', mineBk.data?.some((b) => b.status === 'tu_choi') && mineBk.data.some((b) => b.status === 'cho_duyet'), mineBk.error?.message);
 await bithu.from('events').delete().eq('id', ev.data.id);
 
+console.log('\nQuỹ thôn');
+const fund = await bithu.from('funds').insert({ name: `Quỹ làm đường ngõ 3 ${RUN}`, target_amount: 50000000, created_by: li.data.user.id }).select('id').single();
+check('Cán bộ tạo quỹ', !fund.error, fund.error?.message);
+const F = fund.data.id;
+check('Người dân KHÔNG tạo được quỹ', !!(await danA.from('funds').insert({ name: 'x' })).error);
+const tx = (row) => bithu.from('fund_transactions').insert({ fund_id: F, created_by: li.data.user.id, ...row }).select('id').single();
+const t1 = await tx({ kind: 'thu', amount: 500000, description: 'Đóng góp làm đường', household_id: hh.id });
+const t2 = await tx({ kind: 'thu', amount: 200000, description: 'Ủng hộ', payer_name: 'Mạnh thường quân' });
+const t3 = await tx({ kind: 'chi', amount: 100000, description: 'Mua xi măng' });
+check('Ghi thu theo hộ, thu ngoài, và chi', !t1.error && !t2.error && !t3.error, t1.error?.message ?? t2.error?.message ?? t3.error?.message);
+check('Số tiền phải lớn hơn 0', !!(await tx({ kind: 'thu', amount: 0, description: 'x' })).error);
+check('Khoản CHI không gắn với hộ', !!(await tx({ kind: 'chi', amount: 1000, description: 'x', household_id: hh.id })).error);
+check('Người dân KHÔNG ghi được thu chi', !!(await danA.from('fund_transactions').insert({ fund_id: F, kind: 'thu', amount: 1, description: 'x', created_by: danA.id })).error);
+const fake = await bithu.from('fund_transactions').insert({ fund_id: F, kind: 'thu', amount: 1, description: 'x', created_by: danA.id });
+check('KHÔNG ghi được dưới tên người khác', !!fake.error);
+
+const sum = (await danB.rpc('fund_summaries')).data?.find((f) => f.id === F);
+check('Người dân (khu khác) xem số dư: thu 700k, chi 100k, còn 600k, 1 hộ', sum?.total_thu === 700000 && sum.total_chi === 100000 && sum.balance === 600000 && sum.households === 1, JSON.stringify(sum));
+const txv = (await danB.rpc('fund_transactions_view', { p_fund_id: F })).data;
+check('Người dân xem từng khoản, có tên hộ + khu', txv?.length === 3 && txv.some((t) => t.household_label?.includes('Hộ Chủ hộ') && t.household_label.includes('Khu A')), JSON.stringify(txv?.[0]));
+const contribA = (await danA.rpc('fund_household_contributions', { p_fund_id: F })).data;
+const contribB = (await danB.rpc('fund_household_contributions', { p_fund_id: F })).data;
+check('Danh sách hộ đóng góp: đánh dấu "hộ của tôi" đúng người', contribA?.[0]?.is_mine === true && contribB?.[0]?.is_mine === false && contribA[0].total === 500000);
+const missing = await bithu.rpc('fund_missing_households', { p_fund_id: F });
+check('Cán bộ xem hộ CHƯA đóng góp (để vận động)', !missing.error && !missing.data.some((h) => h.household_id === hh.id), missing.error?.message);
+check('Người dân KHÔNG xem danh sách hộ chưa đóng góp', !!(await danA.rpc('fund_missing_households', { p_fund_id: F })).error);
+check('Người dân KHÔNG lấy được danh sách hộ', !!(await danA.rpc('household_options')).error);
+
+const fix = await photon.from('fund_transactions').update({ amount: 150000 }).eq('id', t3.data.id).select('id');
+check('Cán bộ khác sửa được khoản nhập sai', !fix.error && fix.data?.length === 1, fix.error?.message);
+const fundHackEdit = await danA.from('fund_transactions').update({ amount: 1 }).eq('id', t1.data.id).select('id');
+check('Người dân KHÔNG sửa được', !!fundHackEdit.error || fundHackEdit.data?.length === 0);
+const log = await bithu.from('audit_logs').select('action, data').eq('entity', 'fund_transactions').eq('entity_id', t3.data.id).eq('action', 'update');
+check('Nhật ký ghi lại số cũ và số mới khi sửa', log.data?.[0]?.data?.old?.amount === 100000 && log.data[0].data.new.amount === 150000, JSON.stringify(log.data));
+
+const rcp = `${F}/${RUN}.jpg`;
+check('Cán bộ tải ảnh chứng từ', !(await bithu.storage.from('fund-receipts').upload(rcp, jpeg, { contentType: 'image/jpeg' })).error);
+check('Người dân KHÔNG tải ảnh chứng từ', !!(await danA.storage.from('fund-receipts').upload(`${F}/x-${RUN}.jpg`, jpeg, { contentType: 'image/jpeg' })).error);
+check('Người dân xem được ảnh chứng từ', !!(await danB.storage.from('fund-receipts').createSignedUrls([rcp], 3600)).data?.[0]?.signedUrl);
+const anonFunds = await createClient(URL, ANON, opts).rpc('fund_summaries');
+check('Khách chưa đăng nhập KHÔNG xem được quỹ', !!anonFunds.error || (anonFunds.data ?? []).length === 0);
+await bithu.from('funds').delete().eq('id', F);
+
 console.log(`\nKết quả: ${pass} đạt, ${fail} lỗi\n`);
 await Promise.all([bithu, danA, danB, photon].map((c) => c.removeAllChannels()));
 process.exit(fail ? 1 : 0);

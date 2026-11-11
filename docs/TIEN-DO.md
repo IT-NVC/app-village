@@ -1,6 +1,6 @@
 # Tiến độ dự án — App Thôn Thống Nhất (Xã Sóc Sơn)
 
-> Cập nhật lần cuối: **11/11/2026** (đợt 7: Lịch thôn + Đặt lịch nhà văn hoá)
+> Cập nhật lần cuối: **11/11/2026** (đợt 9: icon mái đình + Khu cán bộ trong app)
 > File này ghi lại **đã làm gì, chưa làm gì, và cách làm tiếp trên máy khác**.
 > Khi làm xong một hạng mục, nhớ đánh dấu `[x]` và cập nhật ngày ở trên.
 
@@ -52,8 +52,11 @@
 - [x] Migration **0005** Khảo sát / Biểu quyết (`polls`, `poll_options`, `poll_votes`, `create_poll`, `cast_vote`, `poll_results`…) — **đã chạy ở local, CHƯA đẩy lên cloud**
 - [x] Migration **0006** Push (`register_push_token`, `unregister_push_token`, `push_log`, `poll_recipients`) — **đã chạy ở local, CHƯA đẩy lên cloud**
 - [x] Migration **0007** Lịch + đặt chỗ (`events`, `venues`, `venue_bookings` có **ràng buộc chống trùng giờ** cho lịch đã duyệt,
-      `request_booking`, `review_booking`, `cancel_booking`) — **đã chạy ở local, CHƯA đẩy lên cloud**
-- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (132 bài, thêm lịch + đặt lịch; thông báo + SOS + phản ánh + tin tức + chat + biểu quyết + hồ sơ + realtime + quyền), `npm run db:test:push` (32 bài, cần `npm run functions:serve:test`) — đều đạt trên local
+      `request_booking`, `review_booking`, `cancel_booking`) — đã lên cloud (0005–0007 đều đã lên)
+- [x] Migration **0008** Quỹ thôn (`funds`, `fund_transactions`, `fund_summaries`, `fund_transactions_view`,
+      `fund_household_contributions`, `fund_missing_households`, kho `fund-receipts`; nhật ký mọi thay đổi)
+      — **đã chạy ở local, CHƯA đẩy lên cloud**
+- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (152 bài, thêm lịch + đặt lịch + quỹ thôn; thông báo + SOS + phản ánh + tin tức + chat + biểu quyết + hồ sơ + realtime + quyền), `npm run db:test:manage` (21 bài, khu cán bộ trong app), `npm run db:test:push` (32 bài, cần `npm run functions:serve:test`) — đều đạt trên local
 
 ### Edge Function
 - [x] `notify`: gửi push sau sự kiện; máy chủ tự kiểm quyền + tự xác định người nhận, chống gửi trùng, xoá mã thiết bị chết — **chạy được ở local (dry-run), CHƯA lên cloud**
@@ -80,6 +83,16 @@
       "Lịch đặt của tôi" (trạng thái, ghi chú cán bộ, huỷ); ô "Lịch thôn" trên trang chủ
 - [x] **Đặt nhà văn hoá / sân** (`app/booking/new.tsx`): chọn địa điểm, dải 30 ngày, khung giờ có sẵn
       (sáng / chiều / tối / cả ngày; khung đã có người đặt bị làm mờ), ghi mục đích
+- [x] **Quỹ thôn** (`app/funds/`): danh sách quỹ (số dư, thu, chi, % mục tiêu), chi tiết: từng khoản thu (+ xanh) /
+      chi (− đỏ) kèm ảnh chứng từ, danh sách hộ đã đóng góp (đánh dấu "hộ của bạn"); ô "Quỹ thôn" trên trang chủ
+- [x] **Khu cán bộ — tab "Quản lý"** (chỉ hiện với Bí thư / Trưởng thôn / Phó thôn; số việc chờ trên tab; rung khi có SOS):
+  - `manage/sos`: tín hiệu 3 ngày, gọi điện, xem bản đồ, Tiếp nhận → Đã xử lý (+ push cho người dân)
+  - `manage/approvals`: duyệt / từ chối (kèm lý do) tài khoản tự khai báo, cảnh báo trùng nhân khẩu đã nhập
+  - `manage/reports` + `manage/report/[id]` (Bí thư / Trưởng thôn): xử lý phản ánh, ảnh, gọi người gửi, ghi chú
+  - `manage/announce`: gửi thông báo toàn thôn / theo khu, chọn mức độ, xác nhận trước khi gửi
+  - `manage/bookings`: duyệt / từ chối đặt nhà văn hoá (khoá nút Duyệt khi trùng giờ)
+  - `manage/fund`: ghi thu chi nhanh (nút +50k/+100k…, tìm hộ không dấu, chụp phiếu thu)
+  - Việc ngồi bàn (nhập Excel, in mã, phân quyền, khảo sát, nhật ký, xuất CSV) vẫn ở trang web quản trị
 - [x] **Gửi phản ánh** (`app/report/new.tsx`): 6 loại sự cố, chụp/chọn tối đa 3 ảnh (tự nén ≤1280px, JPEG 70%), tự lấy vị trí + ghi địa chỉ
 - [x] **Chi tiết phản ánh** (`app/report/[id].tsx`): xem ảnh phóng to, mở bản đồ, dòng thời gian xử lý kèm ghi chú cán bộ, đánh giá 1–5 sao khi hoàn thành
 - [x] Tab Cá nhân: thông tin, ban ngành, đăng xuất, **Sửa thông tin** (`app/profile-edit.tsx`: ảnh đại diện cắt vuông, số điện thoại)
@@ -105,6 +118,8 @@
       tỉ lệ tham gia, kết quả trực tiếp, xem ai chọn gì (khảo sát công khai), đóng sớm, xoá
 - [x] **Lịch & đặt chỗ**: duyệt / từ chối yêu cầu kèm ghi chú (cảnh báo trùng giờ), huỷ lịch; thêm/sửa/xoá sự kiện
       (theo khu hoặc toàn thôn, tuỳ chọn gửi push); quản lý địa điểm
+- [x] **Quỹ thôn**: tạo quỹ (mục tiêu), ghi / sửa / xoá thu chi (chọn hộ, ảnh chứng từ tự nén), hộ đã / **chưa** đóng góp
+      (kèm SĐT để vận động, lọc theo khu), **xuất CSV** để in công khai; nhật ký hiển thị tên quỹ, sự kiện, đặt lịch, khảo sát
 
 ### Cấu hình cloud đã xong
 - [x] Google provider bật; Email provider bật; **Confirm email tắt**
@@ -115,7 +130,7 @@
 ## 3. Chưa làm ⏳ (theo thứ tự nên làm)
 
 ### Việc nhỏ còn dở
-- [ ] **Đẩy migration 0005 + 0006 + 0007 lên cloud**: `npx supabase db push --remote`, và `npm run functions:deploy` (notify + admin-reset-password)
+- [ ] **Đẩy migration 0008 lên cloud**: `npx supabase db push --remote` (0005–0007 và 2 Edge Functions đã lên)
 - [ ] **Bật push**: làm theo [HUONG-DAN-PUSH.md](HUONG-DAN-PUSH.md) (tài khoản Expo, Firebase, development build)
 - [ ] **Đưa Edge Function đặt lại mật khẩu lên cloud**: `npm run functions:deploy`
       (hiện cloud trả 404 → nút "Đặt lại mật khẩu" trong admin chưa chạy với bản cloud)
@@ -129,17 +144,17 @@
       trên Android, bấm thông báo mở đúng màn hình, huỷ mã khi đăng xuất) + admin + Edge Function `notify`.
       **Chờ** cấu hình tài khoản Expo/Firebase + development build (xem HUONG-DAN-PUSH.md). Trong Expo Go push tự bỏ qua.
 - [ ] Push cho **thông báo hẹn giờ** khi tới giờ (cần pg_cron gọi `notify`)
-- [ ] Xem lại giao diện tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức, Tin nhắn (đặc biệt: bàn phím khi chat trên Android) trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
+- [ ] Xem lại giao diện tab **Quản lý** (6 tab trên màn hình hẹp), tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức, Tin nhắn (đặc biệt: bàn phím khi chat trên Android) trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
 - [ ] (Nhỏ) Đổi/bỏ ảnh bìa tin tức chưa xoá ảnh cũ trong kho `news` — dọn định kỳ nếu kho đầy
 
 ### Giai đoạn 2
 - [ ] (Nhỏ) Thu hồi tin nhắn ảnh chưa xoá file ảnh trong kho `chat`
 
 ### Giai đoạn 3 — tiện ích
-- [ ] Quỹ thôn công khai thu chi
+- [x] Đã xong toàn bộ tiện ích dự kiến (biểu quyết, lịch, đặt nhà văn hoá, quỹ thôn). Ý tưởng thêm nếu cần: chợ quê / rao vặt, tìm đồ thất lạc, việc hiếu hỉ.
 
 ### Phát hành
-- [ ] Icon app + màn hình khởi động riêng (hiện đang dùng icon mẫu của Expo)
+- [x] Icon app (mái đình làng, nền xanh lá) + màn hình khởi động + favicon admin — sinh từ `assets/brand/mark.svg` bằng `npm run icons`
 - [ ] Build bằng EAS (`npx eas-cli build`), thử nội bộ (Play Internal testing / TestFlight)
 - [ ] Tài khoản Google Play (25 USD) và Apple Developer (99 USD/năm)
 - [ ] Đưa trang admin lên mạng (Vercel / Netlify / Cloudflare Pages) + thêm domain vào Redirect URLs
@@ -196,8 +211,8 @@ hoặc lấy lại từ Supabase Dashboard → Project Settings → API.
 | Chạy app trên máy ảo | Mở máy ảo → `npm run mobile` → bấm `a` |
 | Chạy trang admin | `npm run admin` → mở http://localhost:5173 |
 | Sửa CSDL | Tạo file mới trong `supabase/migrations/` → thử local `npm run db:reset` → `npx supabase db push` |
-| Sinh lại kiểu TypeScript sau khi sửa CSDL | `npm run db:types` |
-| Supabase local (tuỳ chọn) | `npx supabase start` → `npm run db:seed` (tài khoản thử `bithu` / `123456`) |
+| Sinh lại kiểu TypeScript sau khi sửa CSDL | `npm run db:types` (lấy từ **cloud** — đẩy migration lên trước) |
+| Supabase local (**tuỳ chọn**, cần Docker — đã gỡ khỏi máy ngày 11/11/2026) | `npx supabase start` (tải lại ~6 GB lần đầu) → `npm run db:seed` (tài khoản thử `bithu` / `123456`) |
 | Kiểm thử (local) | `npm run db:test`, `npm run db:test:features`, `npm run db:test:admin` (cần `npm run functions:serve`) |
 | Dùng app với Supabase local | Đổi tên `apps/mobile/.env.local.example` → `.env.local`, điền anon key local |
 
@@ -228,6 +243,10 @@ apps/mobile/src/
     profile-edit.tsx      Sửa ảnh đại diện, số điện thoại
     calendar.tsx          Lịch thôn + lịch đặt của tôi
     booking/new.tsx       Đặt nhà văn hoá / sân
+    funds/index.tsx       Danh sách quỹ
+    funds/[id].tsx        Thu chi + hộ đóng góp
+    (tabs)/manage.tsx     Tab Quản lý (chỉ cán bộ)
+    manage/               Màn hình khu cán bộ: sos, approvals, reports, report/[id], announce, bookings, fund
     announcement/[id].tsx Chi tiết thông báo
     sos.tsx               Khẩn cấp (giữ 3 giây để gửi)
   components/ui.tsx       Bộ component dùng chung (Txt, Button, Field, Card, GradientHeader…)
@@ -239,6 +258,9 @@ apps/mobile/src/
   lib/chat.tsx            Hộp thư chat (my_chat_groups) + tải tin nhắn + màu tên
   lib/images.ts           Nén + tải ảnh dùng chung, link xem ảnh riêng tư
   lib/polls.ts            Khảo sát: tải danh sách, kết quả, thời hạn
+  lib/manage.ts           Cấp bậc người dùng (useRank), số việc chờ cho tab Quản lý
+  components/forbidden.tsx  Màn hình "Không có quyền"
+  lib/funds.ts            Quỹ: định dạng tiền VNĐ, tải số dư / thu chi / đóng góp
   lib/calendar.ts         Lịch: gộp sự kiện + lịch đặt, khung giờ bận
   lib/push.ts             Đăng ký push, huỷ khi đăng xuất, notifyEvent() báo máy chủ gửi push
   components/push-bridge.tsx  Bấm thông báo → mở đúng màn hình
@@ -252,7 +274,7 @@ apps/admin/src/
 packages/shared/src/      Kiểu dữ liệu CSDL + nhãn tiếng Việt (dùng chung app & admin)
 
 supabase/
-  migrations/             0001 bảng · 0002 hàm/RPC/trigger · 0003 RLS/storage/realtime · 0004 hộp thư chat · 0005 biểu quyết · 0006 push · 0007 lịch + đặt chỗ
+  migrations/             0001 bảng · 0002 hàm/RPC/trigger · 0003 RLS/storage/realtime · 0004 hộp thư chat · 0005 biểu quyết · 0006 push · 0007 lịch + đặt chỗ · 0008 quỹ thôn
   functions/              Edge Functions (admin-reset-password, notify)
   tests/                  Kiểm thử end-to-end
   scripts/seed-dev.mjs    Dữ liệu mẫu cho local
@@ -262,6 +284,11 @@ supabase/
 ---
 
 ## 6. Lưu ý kỹ thuật đã gặp
+
+- **Supabase trên Docker đã gỡ** (11/11/2026) để tiết kiệm ~6 GB. App và admin không cần nó (chạy với cloud).
+  Chỉ cần dựng lại (`npx supabase start`) khi muốn **chạy kiểm thử** hoặc **thử migration mới trước khi đẩy lên cloud** —
+  nên làm vậy với mọi thay đổi CSDL, vì kiểm thử ở local đã bắt được nhiều lỗi trước khi lên production.
+- Đổi icon: sửa `assets/brand/mark.svg` rồi chạy `npm run icons` (sinh lại mọi kích thước cho Android, iOS, web, admin).
 
 - **Expo SDK 58 thay đổi nhiều** — đọc `apps/mobile/AGENTS.md`, cài thư viện bằng `npx expo install`.
 - Monorepo phải dùng **TypeScript 6** ở thư mục gốc (TS 7 làm hỏng ESLint của Expo).

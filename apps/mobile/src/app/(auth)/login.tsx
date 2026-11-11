@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -41,7 +41,7 @@ export default function LoginScreen() {
       header={
         <GradientHeader extraBottom={72} style={{ alignItems: 'center' }}>
           <View style={styles.logo}>
-            <Ionicons name="home" size={44} color={Colors.primary} />
+            <Image source={require('@/assets/images/logo-mark.png')} style={{ width: 64, height: 64 }} contentFit="contain" accessibilityLabel="Logo Thôn Thống Nhất" />
           </View>
           <Txt variant="hero" color={Colors.white} center>
             Thôn Thống Nhất

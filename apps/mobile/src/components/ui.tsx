@@ -5,6 +5,7 @@ import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -583,6 +584,19 @@ const styles = StyleSheet.create({
   choiceSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   choiceText: { fontFamily: Font.semibold, fontSize: FontSize.body, color: Colors.primaryText },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 5, borderRadius: Radius.full, alignSelf: 'flex-start' },
+  promptBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: Spacing.lg },
+  promptCard: { backgroundColor: Colors.card, borderRadius: Radius.lg, padding: Spacing.lg, gap: Spacing.md },
+  promptInput: {
+    minHeight: 90,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    padding: 12,
+    fontFamily: Font.regular,
+    fontSize: FontSize.body,
+    color: Colors.text,
+    textAlignVertical: 'top',
+  },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, padding: Spacing.xl },
   emptyIcon: {
     width: 104,
@@ -594,3 +608,103 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 });
+
+/** Chọn nhiều (dạng nút viên thuốc) */
+export function MultiChoice<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T[];
+  onChange: (v: T[]) => void;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      <Txt variant="label">{label}</Txt>
+      <View style={styles.choiceWrap}>
+        {options.map((o) => {
+          const selected = value.includes(o.value);
+          return (
+            <Pressable
+              key={o.value}
+              onPress={() => onChange(selected ? value.filter((v) => v !== o.value) : [...value, o.value])}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected }}
+              style={[styles.choice, selected && styles.choiceSelected]}>
+              {selected && <Ionicons name="checkmark" size={18} color={Colors.white} />}
+              <Text style={[styles.choiceText, selected && { color: Colors.white }]}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** Hộp thoại nhập một dòng chữ (lý do từ chối, ghi chú…) — chạy được cả Android, iOS, web */
+export function PromptModal({
+  visible,
+  title,
+  message,
+  placeholder,
+  confirmText = 'Xác nhận',
+  danger,
+  required,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  title: string;
+  message?: string;
+  placeholder?: string;
+  confirmText?: string;
+  danger?: boolean;
+  required?: boolean;
+  onCancel: () => void;
+  onConfirm: (text: string) => void | Promise<void>;
+}) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <KeyboardAvoidingView behavior="padding" style={styles.promptBackdrop}>
+        <View style={styles.promptCard}>
+          <Txt variant="subtitle">{title}</Txt>
+          {message ? (
+            <Txt variant="small" color={Colors.textSecondary}>
+              {message}
+            </Txt>
+          ) : null}
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder={placeholder}
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            autoFocus
+            style={styles.promptInput}
+          />
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <Button title="Huỷ" variant="secondary" onPress={() => { setText(''); onCancel(); }} style={{ flex: 1 }} />
+            <Button
+              title={confirmText}
+              variant={danger ? 'danger' : 'primary'}
+              loading={busy}
+              disabled={required && !text.trim()}
+              style={{ flex: 1 }}
+              onPress={async () => {
+                setBusy(true);
+                await onConfirm(text.trim());
+                setBusy(false);
+                setText('');
+              }}
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}

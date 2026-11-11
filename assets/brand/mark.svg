@@ -1,0 +1,28 @@
+<!-- Biểu tượng mái đình làng (màu trắng, nền trong suốt) — khung 1024x1024, đặt giữa -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <mask id="cut">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <!-- Ba cửa vòm -->
+      <path d="M452 742 V672 a60 60 0 0 1 120 0 V742 Z" fill="#000"/>
+      <path d="M352 742 V690 a38 38 0 0 1 76 0 V742 Z" fill="#000"/>
+      <path d="M596 742 V690 a38 38 0 0 1 76 0 V742 Z" fill="#000"/>
+      <!-- Khe giữa hai tầng mái -->
+      <rect x="300" y="512" width="424" height="14" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="#fff" mask="url(#cut)">
+    <!-- Hoa văn trên nóc -->
+    <circle cx="512" cy="262" r="20"/>
+    <!-- Mái trên, đầu đao cong vút -->
+    <path d="M512 286 L572 346 Q628 400 700 424 Q730 432 748 406 Q752 452 714 466 L310 466 Q272 452 276 406 Q294 432 324 424 Q396 400 452 346 Z"/>
+    <!-- Thân trên -->
+    <rect x="360" y="466" width="304" height="60"/>
+    <!-- Mái dưới, rộng hơn -->
+    <path d="M372 526 L652 526 Q708 566 790 584 Q826 590 842 562 Q842 614 798 626 L226 626 Q182 614 182 562 Q198 590 234 584 Q316 566 372 526 Z"/>
+    <!-- Thân nhà -->
+    <rect x="320" y="626" width="384" height="116"/>
+    <!-- Bậc thềm -->
+    <rect x="270" y="742" width="484" height="34" rx="8"/>
+  </g>
+</svg>

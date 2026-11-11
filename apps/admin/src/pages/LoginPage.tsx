@@ -1,7 +1,8 @@
-import { GoogleOutlined, HomeFilled, LockOutlined, UserOutlined } from '@ant-design/icons';
+import { GoogleOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Divider, Flex, Form, Input, Typography } from 'antd';
 import { useState } from 'react';
 
+import logo from '@/assets-logo.svg';
 import { useAuth } from '@/lib/auth';
 
 export default function LoginPage() {
@@ -21,7 +22,7 @@ export default function LoginPage() {
     <Flex align="center" justify="center" style={{ minHeight: '100%', padding: 16 }}>
       <Card style={{ width: 400, maxWidth: '100%' }}>
         <Flex vertical align="center" gap={4} style={{ marginBottom: 24 }}>
-          <HomeFilled style={{ fontSize: 40, color: '#3BA56A' }} />
+          <img src={logo} alt="Logo Thôn Thống Nhất" width={64} height={64} />
           <Typography.Title level={3} style={{ margin: 0 }}>
             Thôn Thống Nhất
           </Typography.Title>

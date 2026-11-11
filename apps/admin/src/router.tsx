@@ -10,6 +10,7 @@ import AuditPage from '@/pages/AuditPage';
 import CalendarPage from '@/pages/CalendarPage';
 import ChatGroupsPage from '@/pages/ChatGroupsPage';
 import DashboardPage from '@/pages/DashboardPage';
+import FundsPage from '@/pages/FundsPage';
 import NewsPage from '@/pages/NewsPage';
 import PollsPage from '@/pages/PollsPage';
 import PrintCodesPage from '@/pages/PrintCodesPage';
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
           { path: 'nhom-chat', element: <ChatGroupsPage /> },
           { path: 'bieu-quyet', element: <PollsPage /> },
           { path: 'lich', element: <CalendarPage /> },
+          { path: 'quy', element: <FundsPage /> },
           { path: 'sos', element: <SosPage /> },
           { path: 'phan-anh', element: <ReportsPage /> },
           { path: 'nhan-khau', element: <ResidentsPage /> },

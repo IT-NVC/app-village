@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2E9A5E"/><stop offset="1" stop-color="#4DBA7E"/></linearGradient></defs><g transform="translate(0 0) scale(1)">
+  <defs>
+    <mask id="cut">
+      <rect width="1024" height="1024" fill="#fff"/>
+      
+      <path d="M452 742 V672 a60 60 0 0 1 120 0 V742 Z" fill="#000"/>
+      <path d="M352 742 V690 a38 38 0 0 1 76 0 V742 Z" fill="#000"/>
+      <path d="M596 742 V690 a38 38 0 0 1 76 0 V742 Z" fill="#000"/>
+      
+      <rect x="300" y="512" width="424" height="14" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="#1F7A45" mask="url(#cut)">
+    
+    <circle cx="512" cy="262" r="20"/>
+    
+    <path d="M512 286 L572 346 Q628 400 700 424 Q730 432 748 406 Q752 452 714 466 L310 466 Q272 452 276 406 Q294 432 324 424 Q396 400 452 346 Z"/>
+    
+    <rect x="360" y="466" width="304" height="60"/>
+    
+    <path d="M372 526 L652 526 Q708 566 790 584 Q826 590 842 562 Q842 614 798 626 L226 626 Q182 614 182 562 Q198 590 234 584 Q316 566 372 526 Z"/>
+    
+    <rect x="320" y="626" width="384" height="116"/>
+    
+    <rect x="270" y="742" width="484" height="34" rx="8"/>
+  </g>
+</g></svg>

@@ -96,6 +96,16 @@ function RootNavigator() {
           <Stack.Screen name="profile-edit" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="calendar" />
           <Stack.Screen name="booking/new" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="funds/index" />
+          <Stack.Screen name="funds/[id]" />
+          {/* Khu cán bộ (mỗi màn hình tự kiểm quyền; CSDL cũng chặn) */}
+          <Stack.Screen name="manage/sos" />
+          <Stack.Screen name="manage/approvals" />
+          <Stack.Screen name="manage/reports" />
+          <Stack.Screen name="manage/report/[id]" />
+          <Stack.Screen name="manage/announce" />
+          <Stack.Screen name="manage/bookings" />
+          <Stack.Screen name="manage/fund" />
         </Stack.Protected>
       </Stack>
       </ChatProvider>
