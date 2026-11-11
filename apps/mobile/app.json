@@ -36,7 +36,20 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ứng dụng dùng vị trí để gửi kèm khi bạn bấm KHẨN CẤP hoặc gửi phản ánh, giúp cán bộ thôn tìm đến nhanh hơn."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ứng dụng cần truy cập ảnh để bạn đính kèm ảnh khi gửi phản ánh.",
+          "cameraPermission": "Ứng dụng cần dùng camera để bạn chụp ảnh sự cố khi gửi phản ánh."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

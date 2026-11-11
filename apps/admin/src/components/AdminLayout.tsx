@@ -1,7 +1,11 @@
 import {
   ApartmentOutlined,
   AuditOutlined,
+  AlertOutlined,
   DashboardOutlined,
+  NotificationOutlined,
+  ReadOutlined,
+  ToolOutlined,
   LogoutOutlined,
   SettingOutlined,
   SolutionOutlined,
@@ -13,13 +17,16 @@ import { Badge, Button, Flex, Layout, Menu, Typography } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 
 import { useAuth } from '@/lib/auth';
-import { usePendingCount } from '@/lib/data';
+import { useNewReportsCount, usePendingCount, useSosPendingCount } from '@/lib/data';
+import { SosAlerter } from '@/components/SosAlerter';
 
 export function AdminLayout() {
   const { me, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: pending = 0 } = usePendingCount();
+  const { data: sosPending = 0 } = useSosPendingCount();
+  const { data: newReports = 0 } = useNewReportsCount(isAdmin);
 
   const items = [
     { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
@@ -32,6 +39,30 @@ export function AdminLayout() {
         </Flex>
       ),
     },
+    {
+      key: '/sos',
+      icon: <AlertOutlined />,
+      label: (
+        <Flex justify="space-between" align="center">
+          Khẩn cấp (SOS) <Badge count={sosPending} />
+        </Flex>
+      ),
+    },
+    ...(isAdmin
+      ? [
+          {
+            key: '/phan-anh',
+            icon: <ToolOutlined />,
+            label: (
+              <Flex justify="space-between" align="center">
+                Phản ánh <Badge count={newReports} color="#1E63B8" />
+              </Flex>
+            ),
+          },
+        ]
+      : []),
+    { key: '/thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
+    { key: '/tin-tuc', icon: <ReadOutlined />, label: 'Tin tức' },
     { key: '/nhan-khau', icon: <TeamOutlined />, label: 'Nhân khẩu' },
     { key: '/tai-khoan', icon: <UserSwitchOutlined />, label: 'Tài khoản & phân quyền' },
     { key: '/khu-vuc', icon: <ApartmentOutlined />, label: 'Khu vực & ban ngành' },
@@ -41,6 +72,7 @@ export function AdminLayout() {
 
   return (
     <Layout style={{ minHeight: '100%' }}>
+      <SosAlerter />
       <Layout.Sider width={250} theme="light" breakpoint="lg" collapsedWidth={0} style={{ borderRight: '1px solid #eee' }}>
         <div style={{ padding: '20px 20px 12px' }}>
           <Typography.Title level={4} style={{ margin: 0, color: '#1F7A45' }}>

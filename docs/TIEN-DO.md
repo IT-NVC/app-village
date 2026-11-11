@@ -1,6 +1,6 @@
 # Tiến độ dự án — App Thôn Thống Nhất (Xã Sóc Sơn)
 
-> Cập nhật lần cuối: **10/11/2026**
+> Cập nhật lần cuối: **11/11/2026** (đợt 3: Tin tức — xong giai đoạn 1, trừ push)
 > File này ghi lại **đã làm gì, chưa làm gì, và cách làm tiếp trên máy khác**.
 > Khi làm xong một hạng mục, nhớ đánh dấu `[x]` và cập nhật ngày ở trên.
 
@@ -48,7 +48,7 @@
 - [x] Nhật ký thao tác (thay đổi chức vụ, trạng thái, ban ngành, cài đặt…)
 - [x] Kho ảnh (avatars, news, report-images, chat, attachments) + Realtime cho chat/thông báo/phản ánh/SOS
 - [x] **Đã đẩy lên Supabase cloud** và ghi nhận lịch sử migration
-- [x] Kiểm thử: `npm run db:test` (71 bài) và `npm run db:test:admin` (23 bài) — đều đạt trên local
+- [x] Kiểm thử: `npm run db:test` (71 bài), `npm run db:test:admin` (23 bài), `npm run db:test:features` (52 bài: thông báo + SOS + phản ánh + tin tức + realtime + quyền xem ảnh) — đều đạt trên local
 
 ### Edge Function
 - [x] `admin-reset-password`: cán bộ đặt lại mật khẩu cho người dân (kiểm tra cấp bậc, ghi nhật ký) — **chạy được ở local**
@@ -57,7 +57,15 @@
 - [x] Đăng nhập Google + username/mật khẩu, đăng ký, dịch lỗi sang tiếng Việt
 - [x] Kích hoạt bằng mã / tự khai báo hồ sơ / màn hình chờ duyệt / bị khoá
 - [x] Tự điều hướng theo trạng thái tài khoản (`Stack.Protected`)
-- [x] Trang chủ: lời chào, nhãn ngày/khu/chức vụ, nút KHẨN CẤP (**chưa có chức năng**), 4 ô tiện ích, danh bạ gọi điện
+- [x] Trang chủ: lời chào, nhãn ngày/khu/chức vụ, nút KHẨN CẤP, dải báo thông báo khẩn chưa đọc, 3 thông báo mới, 4 ô tiện ích, danh bạ gọi điện, chuông có số chưa đọc
+- [x] **Tab Thông báo**: lọc Tất cả / Chưa đọc / Khẩn, "Đọc hết", kéo để tải lại, số chưa đọc trên tab, tự cập nhật realtime (`lib/announcements.tsx`)
+- [x] **Chi tiết thông báo** (`app/announcement/[id].tsx`): tự đánh dấu đã đọc, người gửi + chức vụ, gửi tới khu/ban nào
+- [x] **SOS** (`app/sos.tsx`): giữ 3 giây mới gửi, rung, kèm vị trí GPS (xin quyền khi mở màn hình), chọn loại sự việc, theo dõi trạng thái realtime (+ hỏi lại mỗi 15 giây), gọi nhanh 113/114/115
+- [x] **Tab Phản ánh**: danh sách phản ánh của mình (ảnh nhỏ, trạng thái), tự cập nhật khi cán bộ xử lý
+- [x] **Tin tức**: dải tin cuộn ngang trên trang chủ (tin ghim đứng đầu), trang danh sách (`app/news/index.tsx`),
+      trang đọc tin chữ to có ảnh bìa (`app/news/[id].tsx`)
+- [x] **Gửi phản ánh** (`app/report/new.tsx`): 6 loại sự cố, chụp/chọn tối đa 3 ảnh (tự nén ≤1280px, JPEG 70%), tự lấy vị trí + ghi địa chỉ
+- [x] **Chi tiết phản ánh** (`app/report/[id].tsx`): xem ảnh phóng to, mở bản đồ, dòng thời gian xử lý kèm ghi chú cán bộ, đánh giá 1–5 sao khi hoàn thành
 - [x] Tab Cá nhân: thông tin, ban ngành, đăng xuất
 - [x] Giao diện đã làm đẹp (header gradient, thẻ bóng đổ, font Be Vietnam Pro)
 - [x] Chạy được trên máy ảo Android bằng Expo Go, bản web cũng build được
@@ -69,6 +77,13 @@
 - [x] Tài khoản & phân quyền: đặt chức vụ, khoá/mở, đặt lại mật khẩu
 - [x] Khu vực & ban ngành: thành viên, giao trưởng ban, tạo nhóm chat 1 chạm
 - [x] Cài đặt (công tắc chờ duyệt, danh bạ), Nhật ký thao tác
+- [x] **Thông báo**: soạn (mức độ, toàn thôn / chọn khu + ban ngành, hẹn giờ), danh sách + % đã đọc, xem danh sách **chưa đọc kèm SĐT** để gọi nhắc, xoá
+- [x] **Khẩn cấp (SOS)**: danh sách theo trạng thái, tên/SĐT/khu, mở vị trí trên Google Maps, Tiếp nhận → Đã xử lý
+- [x] **Cảnh báo SOS ở mọi trang**: kêu chuông + hộp cảnh báo + đổi tiêu đề tab trình duyệt; menu có số SOS đang chờ;
+      dự phòng hỏi lại mỗi 20 giây nếu Realtime lỡ sự kiện
+- [x] **Phản ánh** (chỉ Bí thư / Trưởng thôn): lọc theo trạng thái + loại, xem ảnh (phóng to), vị trí trên bản đồ,
+      dòng thời gian, cập nhật trạng thái kèm ghi chú gửi người dân, xem đánh giá; thông báo khi có phản ánh mới
+- [x] **Tin tức**: viết/sửa tin (tiêu đề, tóm tắt, ảnh bìa tự nén ≤1600px, nội dung), bản nháp / đăng, ghim, bật tắt nhanh, xoá
 
 ### Cấu hình cloud đã xong
 - [x] Google provider bật; Email provider bật; **Confirm email tắt**
@@ -87,13 +102,12 @@
 - [ ] Tạo commit git đầu tiên + đẩy lên GitHub (private) — **cần làm trước khi đổi máy** (xem mục 4)
 
 ### Giai đoạn 1 — tính năng lõi còn thiếu
-- [ ] **Tab Thông báo** (app): danh sách, chi tiết, đánh dấu đã đọc, lọc theo mức độ
-- [ ] **Gửi thông báo** (admin): soạn, chọn khu/ban ngành, hẹn giờ, xem ai chưa đọc
-- [ ] **Thông báo đẩy (push)**: lưu push token + Edge Function gửi qua Expo Push khi có thông báo / SOS
-- [ ] **Nút SOS chạy thật**: giữ 3 giây mới gửi, lấy vị trí GPS, báo cán bộ; trang admin xem & xử lý SOS
-- [ ] **Tab Phản ánh** (app): chụp ảnh, vị trí, chọn loại, theo dõi trạng thái, đánh giá
-- [ ] **Xử lý phản ánh** (admin, Bí thư): danh sách, đổi trạng thái, ghi chú
-- [ ] **Tin tức**: admin soạn/đăng tin có ảnh bìa, app hiển thị trên trang chủ
+- [ ] **Thông báo đẩy (push)** — hiện thông báo khi app đang tắt. Cần **development build**
+      (Expo Go trên Android không hỗ trợ push từ SDK 53): `expo-notifications` + lưu `push_tokens`
+      + Edge Function gửi qua Expo Push khi có thông báo mới / SOS / phản ánh được xử lý.
+      Hiện tại: thông báo & SOS cập nhật **realtime khi app đang mở** và tải lại khi mở app.
+- [ ] Xem lại giao diện tab Thông báo, chi tiết, SOS, Phản ánh (gửi / chi tiết), Tin tức trên máy ảo hoặc điện thoại thật — đã kiểm thử logic, chưa chụp màn hình
+- [ ] (Nhỏ) Đổi/bỏ ảnh bìa tin tức chưa xoá ảnh cũ trong kho `news` — dọn định kỳ nếu kho đầy
 
 ### Giai đoạn 2
 - [ ] **Tab Tin nhắn**: danh sách nhóm, chat realtime, gửi ảnh, ghim, thu hồi, số tin chưa đọc
@@ -165,7 +179,7 @@ hoặc lấy lại từ Supabase Dashboard → Project Settings → API.
 | Sửa CSDL | Tạo file mới trong `supabase/migrations/` → thử local `npm run db:reset` → `npx supabase db push` |
 | Sinh lại kiểu TypeScript sau khi sửa CSDL | `npm run db:types` |
 | Supabase local (tuỳ chọn) | `npx supabase start` → `npm run db:seed` (tài khoản thử `bithu` / `123456`) |
-| Kiểm thử phân quyền (local) | `npm run db:test` và `npm run db:test:admin` (cần `npm run functions:serve`) |
+| Kiểm thử (local) | `npm run db:test`, `npm run db:test:features`, `npm run db:test:admin` (cần `npm run functions:serve`) |
 | Dùng app với Supabase local | Đổi tên `apps/mobile/.env.local.example` → `.env.local`, điền anon key local |
 
 ### 4.4. Khi nhờ Claude Code làm tiếp
@@ -183,10 +197,19 @@ apps/mobile/src/
     (auth)/               Đăng nhập, đăng ký
     (onboarding)/         Kích hoạt mã, tự khai báo
     waiting.tsx           Chờ duyệt / bị khoá
-    (tabs)/               Trang chủ, Thông báo*, Phản ánh*, Tin nhắn*, Cá nhân   (* = chưa làm)
+    (tabs)/               Trang chủ, Thông báo, Phản ánh, Tin nhắn*, Cá nhân   (* = chưa làm)
+    report/new.tsx        Gửi phản ánh
+    report/[id].tsx       Chi tiết phản ánh + đánh giá
+    news/index.tsx        Danh sách tin tức
+    news/[id].tsx         Đọc tin
+    announcement/[id].tsx Chi tiết thông báo
+    sos.tsx               Khẩn cấp (giữ 3 giây để gửi)
   components/ui.tsx       Bộ component dùng chung (Txt, Button, Field, Card, GradientHeader…)
   constants/theme.ts      Màu, font, khoảng cách, bóng đổ
   lib/auth.tsx            Đăng nhập, trạng thái tài khoản (get_me)
+  lib/announcements.tsx   Danh sách thông báo + đã đọc + realtime (dùng chung toàn app)
+  lib/reports.ts          Loại sự cố, trạng thái, nén + tải ảnh, link xem ảnh
+  lib/news.ts             Tải tin tức đã đăng
   lib/supabase.ts         Kết nối Supabase
 
 apps/admin/src/
@@ -216,3 +239,10 @@ supabase/
 - Đổi `.env` phải **khởi động lại** `npm run mobile`.
 - Lệnh Supabase CLI mặc định nhắm vào **local**; muốn tác động cloud phải thêm `--remote`.
 - Dán SQL vào SQL Editor thay vì `db push` sẽ làm mất lịch sử migration → dùng `migration repair`.
+- Thêm màn hình mới mà TypeScript báo lỗi route → chạy `npm run mobile` một lần để Expo Router sinh lại kiểu.
+- Bảng có 2 khoá ngoại tới `profiles` (vd. `sos_events`) → khi nhúng phải ghi rõ: `profiles!sos_events_user_id_fkey(...)`.
+- Máy ảo đôi khi kẹt "device offline" → tắt hẳn máy ảo (Device Manager → Stop) rồi bật lại.
+- **Realtime có thể lỡ sự kiện** lúc vừa kết nối (khởi động lạnh) hoặc mạng chập chờn → mọi màn hình quan trọng
+  đều có dự phòng tải lại định kỳ. Khi thêm tính năng realtime mới, nhớ làm tương tự.
+- Ảnh phản ánh nằm trong kho **riêng tư** `report-images/{user_id}/...` → xem bằng link có hạn (`createSignedUrls`);
+  chỉ người gửi + Bí thư/Trưởng thôn xem được.

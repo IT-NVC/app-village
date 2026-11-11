@@ -53,6 +53,37 @@ export function useActivePeople() {
   });
 }
 
+/** Số tín hiệu SOS đang chờ (hiện trên menu) */
+export function useSosPendingCount() {
+  return useQuery({
+    queryKey: ['sos-pending'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('sos_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'dang_cho');
+      return count ?? 0;
+    },
+    refetchInterval: 60_000,
+  });
+}
+
+/** Số phản ánh mới chưa xử lý (chỉ Bí thư / Trưởng thôn xem được) */
+export function useNewReportsCount(enabled: boolean) {
+  return useQuery({
+    queryKey: ['reports-new'],
+    enabled,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'moi');
+      return count ?? 0;
+    },
+    refetchInterval: 60_000,
+  });
+}
+
 /** Số tài khoản chờ duyệt (hiện trên menu) */
 export function usePendingCount() {
   return useQuery({

@@ -15,3 +15,6 @@ body { background: #f3f8f5; }
   .print-sheet { padding: 0; gap: 8px; }
   @page { size: A4; margin: 10mm; }
 }
+
+/* Hàng SOS đang chờ: nền đỏ nhạt để nổi bật */
+.sos-row-pending > td { background: #fdecea !important; }

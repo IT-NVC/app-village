@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui';
 import { Colors, Font, Shadow } from '@/constants/theme';
+import { useAnnouncements } from '@/lib/announcements';
 
 const tabs: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
   { name: 'index', title: 'Trang chủ', icon: 'home-outline', iconActive: 'home' },
@@ -16,6 +17,7 @@ const tabs: { name: string; title: string; icon: IconName; iconActive: IconName 
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { unreadCount } = useAnnouncements();
   return (
     <Tabs
       screenOptions={{
@@ -39,6 +41,8 @@ export default function TabsLayout() {
           name={t.name}
           options={{
             title: t.title,
+            tabBarBadge: t.name === 'notifications' && unreadCount > 0 ? unreadCount : undefined,
+            tabBarBadgeStyle: { backgroundColor: Colors.danger, fontFamily: Font.bold, fontSize: 11 },
             tabBarIcon: ({ color, focused }) => (
               // Viên nền nhạt phía sau icon của tab đang chọn
               <View

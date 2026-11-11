@@ -13,6 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Button, EmptyState, Loading } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
+import { AnnouncementsProvider } from '@/lib/announcements';
 import { AuthProvider, useAuth } from '@/lib/auth';
 
 SplashScreen.preventAutoHideAsync();
@@ -38,7 +39,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { phase, refreshMe, signOut } = useAuth();
+  const { phase, me, refreshMe, signOut } = useAuth();
 
   useEffect(() => {
     if (phase !== 'loading') SplashScreen.hideAsync();
@@ -65,19 +66,27 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
-      <Stack.Protected guard={phase === 'signedOut'}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-      <Stack.Protected guard={phase === 'onboarding'}>
-        <Stack.Screen name="(onboarding)" />
-      </Stack.Protected>
-      <Stack.Protected guard={phase === 'waiting'}>
-        <Stack.Screen name="waiting" />
-      </Stack.Protected>
-      <Stack.Protected guard={phase === 'active'}>
-        <Stack.Screen name="(tabs)" />
-      </Stack.Protected>
-    </Stack>
+    <AnnouncementsProvider userId={phase === 'active' ? (me?.id ?? null) : null}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
+        <Stack.Protected guard={phase === 'signedOut'}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected guard={phase === 'onboarding'}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+        <Stack.Protected guard={phase === 'waiting'}>
+          <Stack.Screen name="waiting" />
+        </Stack.Protected>
+        <Stack.Protected guard={phase === 'active'}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="announcement/[id]" />
+          <Stack.Screen name="sos" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="report/new" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="report/[id]" />
+          <Stack.Screen name="news/index" />
+          <Stack.Screen name="news/[id]" />
+        </Stack.Protected>
+      </Stack>
+    </AnnouncementsProvider>
   );
 }

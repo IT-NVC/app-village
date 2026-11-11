@@ -3,6 +3,7 @@ import { App as AntApp, ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -10,6 +11,7 @@ import { AuthProvider } from '@/lib/auth';
 import { AppRouter } from '@/router';
 import './styles.css';
 
+dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
 const queryClient = new QueryClient({

@@ -3,13 +3,17 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
 import { AdminLayout } from '@/components/AdminLayout';
 import { RequireLeader } from '@/components/RequireLeader';
 import AccountsPage from '@/pages/AccountsPage';
+import AnnouncementsPage from '@/pages/AnnouncementsPage';
 import ApprovalsPage from '@/pages/ApprovalsPage';
 import AreasPage from '@/pages/AreasPage';
 import AuditPage from '@/pages/AuditPage';
 import DashboardPage from '@/pages/DashboardPage';
+import NewsPage from '@/pages/NewsPage';
 import PrintCodesPage from '@/pages/PrintCodesPage';
+import ReportsPage from '@/pages/ReportsPage';
 import ResidentsPage from '@/pages/ResidentsPage';
 import SettingsPage from '@/pages/SettingsPage';
+import SosPage from '@/pages/SosPage';
 
 const router = createBrowserRouter([
   {
@@ -21,6 +25,10 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'duyet', element: <ApprovalsPage /> },
+          { path: 'thong-bao', element: <AnnouncementsPage /> },
+          { path: 'tin-tuc', element: <NewsPage /> },
+          { path: 'sos', element: <SosPage /> },
+          { path: 'phan-anh', element: <ReportsPage /> },
           { path: 'nhan-khau', element: <ResidentsPage /> },
           { path: 'tai-khoan', element: <AccountsPage /> },
           { path: 'khu-vuc', element: <AreasPage /> },

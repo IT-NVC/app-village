@@ -40,8 +40,8 @@ export default function DashboardPage() {
     { title: 'Tài khoản đang hoạt động', value: data?.active, icon: <UserOutlined />, color: '#2E7D32', to: '/tai-khoan' },
     { title: 'Nhân khẩu trong hệ thống', value: data?.residents, icon: <TeamOutlined />, color: '#1F7A45', to: '/nhan-khau' },
     { title: 'Nhân khẩu chưa kích hoạt', value: data?.noAccount, icon: <KeyOutlined />, color: '#555B66', to: '/nhan-khau' },
-    { title: 'Phản ánh chưa xử lý xong', value: data?.reports, icon: <ToolOutlined />, color: '#6A1B9A', hidden: !isAdmin },
-    { title: 'Tín hiệu SOS đang chờ', value: data?.sos, icon: <AlertOutlined />, color: '#C62828' },
+    { title: 'Phản ánh chưa xử lý xong', value: data?.reports, icon: <ToolOutlined />, color: '#6A1B9A', hidden: !isAdmin, to: '/phan-anh' },
+    { title: 'Tín hiệu SOS đang chờ', value: data?.sos, icon: <AlertOutlined />, color: '#C62828', to: '/sos' },
   ];
 
   return (

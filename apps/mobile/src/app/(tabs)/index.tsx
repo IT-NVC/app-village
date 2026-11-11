@@ -3,7 +3,7 @@ import { LEADERSHIP_ROLE_LABEL } from '@thon/shared';
 import { router, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import {
   Avatar,
@@ -18,9 +18,13 @@ import {
   Txt,
   type IconName,
 } from '@/components/ui';
-import { Colors, Gradients, Radius, Shadow, Spacing } from '@/constants/theme';
+import { AnnouncementCard } from '@/components/announcement-card';
+import { NewsSlide } from '@/components/news-card';
+import { Colors, Font, Gradients, Radius, Shadow, Spacing } from '@/constants/theme';
+import { useAnnouncements } from '@/lib/announcements';
 import { useAuth } from '@/lib/auth';
-import { confirmAction, showInfo } from '@/lib/dialog';
+import { confirmAction } from '@/lib/dialog';
+import { fetchNews, type NewsItem } from '@/lib/news';
 import { supabase } from '@/lib/supabase';
 
 type Contact = { id: string; name: string; title: string | null; phone: string; category: string };
@@ -61,11 +65,18 @@ async function fetchContacts(): Promise<Contact[]> {
 
 export default function HomeScreen() {
   const { me } = useAuth();
+  const { items, unreadCount, refresh: refreshAnnouncements } = useAnnouncements();
+  const latest = items.slice(0, 3);
+  const urgent = items.find((a) => a.priority === 'khan' && !a.read);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const { width } = useWindowDimensions();
+  const slideWidth = Math.min(width * 0.78, 340);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchContacts().then(setContacts);
+    fetchNews(6).then(setNews);
   }, []);
 
   const call = (c: Contact) => confirmAction(`Gọi ${c.name}?`, c.phone, 'Gọi', () => Linking.openURL(`tel:${c.phone}`));
@@ -79,7 +90,9 @@ export default function HomeScreen() {
           colors={[Colors.primary]}
           onRefresh={async () => {
             setRefreshing(true);
-            setContacts(await fetchContacts());
+            const [c, n] = await Promise.all([fetchContacts(), fetchNews(6), refreshAnnouncements()]);
+            setContacts(c);
+            setNews(n);
             setRefreshing(false);
           }}
         />
@@ -96,7 +109,20 @@ export default function HomeScreen() {
                 {me?.full_name ?? 'bà con'}
               </Txt>
             </View>
-            <IconButton icon="notifications-outline" label="Thông báo" onPress={() => router.navigate('/notifications')} />
+            <View>
+              <IconButton
+                icon="notifications-outline"
+                label={unreadCount ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
+                onPress={() => router.navigate('/notifications')}
+              />
+              {unreadCount > 0 && (
+                <View style={styles.bellBadge}>
+                  <Txt variant="caption" color={Colors.white} style={{ fontFamily: Font.bold, fontSize: 12, lineHeight: 16 }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Txt>
+                </View>
+              )}
+            </View>
           </View>
           <View style={styles.chips}>
             <Chip light icon="calendar-outline" text={today()} />
@@ -105,11 +131,10 @@ export default function HomeScreen() {
           </View>
         </GradientHeader>
       }>
-      {/* Nút khẩn cấp: logic giữ 3 giây + gửi vị trí sẽ làm ở giai đoạn sau */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Khẩn cấp, báo ngay cho cán bộ thôn"
-        onPress={() => showInfo('Khẩn cấp', 'Tính năng gửi tín hiệu khẩn cấp đang được xây dựng.')}
+        onPress={() => router.push('/sos')}
         style={({ pressed }) => [styles.sosWrap, pressed && { transform: [{ scale: 0.98 }] }]}>
         <LinearGradient colors={Gradients.danger} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.sos}>
           <View style={styles.sosIcon}>
@@ -126,6 +151,24 @@ export default function HomeScreen() {
           <Ionicons name="chevron-forward" size={28} color={Colors.white} />
         </LinearGradient>
       </Pressable>
+
+      {urgent && (
+        <Pressable
+          onPress={() => router.push({ pathname: '/announcement/[id]', params: { id: urgent.id } })}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.urgent, pressed && { opacity: 0.85 }]}>
+          <Ionicons name="megaphone" size={26} color={Colors.danger} />
+          <View style={{ flex: 1 }}>
+            <Txt variant="caption" color={Colors.danger} style={{ fontFamily: Font.bold }}>
+              THÔNG BÁO KHẨN
+            </Txt>
+            <Txt variant="bodyStrong" numberOfLines={2}>
+              {urgent.title}
+            </Txt>
+          </View>
+          <Ionicons name="chevron-forward" size={22} color={Colors.danger} />
+        </Pressable>
+      )}
 
       <SectionTitle title="Tiện ích" />
       <View style={styles.grid}>
@@ -146,6 +189,53 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </View>
+
+      {news.length > 0 && (
+        <>
+          <SectionTitle
+            title="Tin tức của thôn"
+            action={
+              <Pressable onPress={() => router.push('/news')} hitSlop={10} accessibilityRole="link">
+                <Txt variant="label" color={Colors.primaryText}>
+                  Xem tất cả
+                </Txt>
+              </Pressable>
+            }
+          />
+          {/* Dải cuộn ngang tràn ra hai mép màn hình */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={slideWidth + Spacing.md}
+            decelerationRate="fast"
+            style={{ marginHorizontal: -Spacing.lg }}
+            contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: Spacing.md, paddingBottom: 4 }}>
+            {news.map((n) => (
+              <NewsSlide key={n.id} item={n} width={slideWidth} />
+            ))}
+          </ScrollView>
+        </>
+      )}
+
+      <SectionTitle
+        title="Thông báo mới"
+        action={
+          <Pressable onPress={() => router.navigate('/notifications')} hitSlop={10} accessibilityRole="link">
+            <Txt variant="label" color={Colors.primaryText}>
+              Xem tất cả
+            </Txt>
+          </Pressable>
+        }
+      />
+      {latest.length === 0 ? (
+        <Card>
+          <Txt variant="small" color={Colors.textSecondary} style={{ paddingVertical: Spacing.sm }}>
+            Chưa có thông báo nào.
+          </Txt>
+        </Card>
+      ) : (
+        latest.map((a) => <AnnouncementCard key={a.id} item={a} compact />)
+      )}
 
       <SectionTitle title="Danh bạ khẩn cấp" />
       <Card style={{ paddingVertical: Spacing.xs }}>
@@ -195,6 +285,30 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     gap: Spacing.md,
     ...Shadow.sm,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 5,
+    borderRadius: 11,
+    backgroundColor: Colors.danger,
+    borderWidth: 2,
+    borderColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  urgent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.dangerSoft,
+    borderWidth: 1.5,
+    borderColor: '#F3C2C2',
   },
   callBtn: {
     width: 46,
